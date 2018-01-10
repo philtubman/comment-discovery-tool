@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Word Selection Page</title>
+    <script src="../lib/d3/d3.js"></script>
+    <script src="../d3.layout.cloud.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="tableStyle.css">
+</head>
+<body>
+    <p>The Word Cloud contains the top 200 most used words in the comments on the course that
+    you selected. The words are scaled based on the frequency, with more frequently used words
+    being drawn larger.</p>
+    <p>Click on a word to show the comments featuring that word.</p>
+
+    <form action="loadTable.php" method="POST" style="display:none;">
+    <pre>
+    Author <input type="text" id="chosenWord" name="chosenWord">
+            <input type="submit" value="ADD RECORD" id="submitWord">
+    </pre></form>
+    <br>
+</body>
+</html>
