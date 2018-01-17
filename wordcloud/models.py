@@ -30,3 +30,14 @@ class LTIConsumer(models.Model):
 
 class StopWord(models.Model):
     word = models.CharField(max_length=24, unique=True)
+
+class UserAccess(models.Model):
+    user_id = models.CharField(max_length=36, unique=True)
+    count = models.IntegerField()
+    last_access = models.DateTimeField(auto_now=True)
+
+class CourseLog(models.Model):
+    user_id = models.CharField(max_length=36, unique=True)
+    return_url = models.CharField(max_length=255)
+    course_id = models.CharField(max_length=255)
+    access_time = models.DateTimeField(auto_now=True)

@@ -11,10 +11,11 @@
 <body>
     <div>
         <p>The word you chose is: "<mark>{{ chosen_word }}</mark>"</p>
-        <p>Click on new word to construct a different Word Cloud.</p>
+        <p>Click on a new word to construct a different Word Cloud.</p>
     </div>
     <div id="wordcloud"></div>
     <form action="{% url 'twowordsresults' %}" method="POST" style="display:none;">
+        {% csrf_token %}
         <input type="text" id="chosenWord2" name="chosenWord2">
         <input type="submit" value="ADD RECORD" id="submitWord">
     </form>
@@ -35,6 +36,6 @@
         {% endfor %}
         </tbody>
     </table>
-    <script type="text/javascript" src="/static/js/doublewordcloud.js"></script>
+    <script type="text/javascript" src="/static/js/onewordresults.js"></script>
 </body>
 </html>

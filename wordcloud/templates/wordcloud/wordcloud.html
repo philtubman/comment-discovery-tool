@@ -17,12 +17,12 @@
 
     <div id="wordcloud"></div>
 
-    <form action="{% url 'commenttable' %}" method="POST" style="display:none;">
+    <form action="{% url 'onewordresults' %}" method="POST" style="display:none;">
         {% csrf_token %}
         <input type="text" id="chosenWord" name="chosenWord">
         <input type="submit" value="ADD RECORD" id="submitWord">
     </form>
     <br>
-    <script type="text/javascript" src="/static/js/singlewordcloud.js"></script>
+    <script type="text/javascript" src="/static/js/wordcloud.js"></script>
 </body>
 </html>

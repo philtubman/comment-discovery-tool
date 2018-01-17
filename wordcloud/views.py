@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from urllib.parse import urlparse
 from ims_lti_py.tool_provider import DjangoToolProvider
-from .models import Comment, CommentTerms, LTIConsumer, Term
+from .models import Comment, CommentTerms, CourseLog, LTIConsumer, Term, UserAccess
 from django.db import connection
 from io import TextIOWrapper
 import csv
@@ -49,6 +49,8 @@ def ltilaunch(request):
     else:
         print('No return url')
 
+    _log_launch(lti_params['user_id'],lti_params['context_id'], lti_params.get('launch_presentation_return_url'))
+
     return wordcloud(request)
 
 def wordcloud(request):
@@ -56,7 +58,7 @@ def wordcloud(request):
     return render(request, 'wordcloud/wordcloud.html')
 
 @require_POST
-def commenttable(request):
+def onewordresults(request):
 
     user_id = request.session['user_id']
     course_id = request.session['course_id']
@@ -87,10 +89,38 @@ def commenttable(request):
             comment_text = result[2].replace(chosen_word, "<mark>{}</mark>".format(chosen_word))
             comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
     #log_search(user_id, chosen_word, chosen_topic, course_run)
-    return render(request, 'wordcloud/commenttable.html', {'comments': comments, 'chosen_word': chosen_word, 'chosen_topic': chosen_topic, 'course_run': course_run})
+    return render(request, 'wordcloud/onewordresults.html', {'comments': comments, 'chosen_word': chosen_word, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
+@require_POST
 def twowordsresults(request):
-    return render(request, 'wordcloud/twowordresults.html')
+
+    chosen_topic = request.session['chosen_topic']
+    course_run = request.session['course_run']
+
+    chosen_word_1 = request.session['chosen_word']
+    chosen_word_2 = request.POST['chosenWord2']
+
+    sql = """SELECT author_id, id, text, course_run
+            FROM wordcloud_comment AS c
+            WHERE text LIKE %s
+            AND text LIKE %s
+            ORDER BY timestamp DESC
+            fetch first 100 rows only"""
+
+    chosen_word_1_like = "% {} %".format(chosen_word_1)
+    chosen_word_2_like = "% {} %".format(chosen_word_2)
+    comments = []
+    with connection.cursor() as cursor:
+        cursor.execute(sql, [chosen_word_1_like, chosen_word_2_like])
+        for result in cursor:
+            comment_text = result[2].replace(chosen_word_1, "<mark>{}</mark>".format(chosen_word_1)).replace(chosen_word_2, "<mark>{}</mark>".format(chosen_word_2))
+            comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
+    #log_search(user_id, chosen_word, chosen_topic, course_run)
+
+    del request.session['chosen_word']
+    request.session.modified = True
+
+    return render(request, 'wordcloud/twowordsresults.html', {'comments': comments, 'chosen_word_1': chosen_word_1, 'chosen_word_2': chosen_word_2, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
 def uploadcsv(request):
 
@@ -192,4 +222,8 @@ def terms(request):
             results.append({'text': result[0], 'size': str(result[1])})
 
     return JsonResponse(results, safe=False)
-    #return JsonResponse([{'text': 'balls', 'size': '200'},{'text': 'eggs', 'size': '50'}, {'text': 'chicken', 'size': '73'}], safe=False)
+
+def _log_launch(user_id, course_id, return_url):
+
+    user_access = UserAccess.objects.get_or_create(user_id=user_id, defaults={'count': 1})
+    CourseLog.objects.create(user_id=user_id, return_url=return_url, course_id=course_id)
