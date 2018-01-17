@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Comment Selection Page</title>
+    <script src="/static/js/d3.js"></script>
+    <script src="/static/js/d3.layout.cloud.js"></script>
+    <script src="/static/js/jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/tablestyle.css">
+</head>
+<body>
+    <div>
+        <p>The word you chose is: "<mark>{{ chosen_word }}</mark>"</p>
+        <p>Click on new word to construct a different Word Cloud.</p>
+    </div>
+    <div id="wordcloud"></div>
+    <form action="{% url 'twowordsresults' %}" method="POST" style="display:none;">
+        <input type="text" id="chosenWord2" name="chosenWord2">
+        <input type="submit" value="ADD RECORD" id="submitWord">
+    </form>
+    <p>The 100 most recent comments featuring "<mark>{{ chosen_word }}</mark>" from the {{ chosen_topic }} course are shown below. </p>
+    <table>
+        <thead>
+            <tr>
+                <th>Comment Link</th>
+                <th>Comment Text</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for comment in comments %}
+            <tr>
+                <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.id }}">Link</a></td>
+                <td>{{ comment.text }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <script type="text/javascript" src="/static/js/doublewordcloud.js"></script>
+</body>
+</html>

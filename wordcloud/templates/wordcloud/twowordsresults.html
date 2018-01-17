@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Two Words Combined</title>
+    <script src="/static/js/d3.js"></script>
+    <script src="/static/js/d3.layout.cloud.js"></script>
+    <script src="/static/js/jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/tablestyle.css">
+</head>
+<body>
+    <?php
+        require_once('db-connect.php');
+        require_once('db.php');
+
+        $sid = $_POST['sid'];
+
+        $chosenWord = addslashes($_POST['chosenWord']);
+        $chosenWord2 = addslashes($_POST['chosenWord2']);
+        $chosenTopic = addslashes($_POST['chosenTopic']);
+        $courseRun = addslashes($_POST['courseRun']);
+        logSearch($conn, $_POST['userId'], $chosenWord . '+' . $chosenWord2, $chosenTopic, $courseRun);
+    ?>
+    <div>
+        <br> 
+        <p>The words you have chosen are: "<mark><?php echo $chosenWord; ?></mark>" and "<mark><?php echo $chosenWord2; ?></mark>"</p>
+        <p>Click on new word to construct a different Word Cloud.</p>
+    </div>
+    <?php
+        $resultForTable = getTopNCommentsMatchingTwoTerms($conn, $chosenTopic, $courseRun, $chosenWord, $chosenWord2);
+        $json = getTopNTermsForCommentMatchingTwoTerms($conn, $chosenTopic, $courseRun, $chosenWord, $chosenWord2);
+    ?>
+    <form action="loadTable.php" method="post" style="display:none;">
+    <pre>
+    Author <input type="text" id="chosenWord" name="chosenWord">
+    <input type="text" id="chosenTopic" name="chosenTopic">
+    <input type="submit" value="ADD RECORD" id="submitWord">
+    <input type="hidden" name="sid" value="<?=$sid?>" />
+    </pre></form>
+    <?php  require_once( 'js-script.php' ); ?>
+    <p>The 100 most recent comments feauturing "<mark><?php echo $chosenWord; ?></mark>" and "<mark><?php echo $chosenWord2; ?></mark>" from the <?php echo $chosenTopic; ?> course are shown below. </p>
+    <table>
+        <tr>
+            <th>Comment link</th>
+            <th>Comment Text</th>
+        </tr>
+        <?php
+            while ($row = sqlsrv_fetch_array($resultForTable, SQLSRV_FETCH_ASSOC)) {
+                $comment_text = $row["text"];
+                $comment_text_with_highlighting = str_replace($chosenWord, "<mark>{$chosenWord}</mark>", $comment_text);
+                if ($chosenWord != $chosenWord2) {
+                    $comment_text_with_highlighting = str_replace($chosenWord2, "<mark>{$chosenWord2}</mark>", $comment_text_with_highlighting);
+                }
+        ?>
+        <tr>
+            <td><a href="https://www.futurelearn.com/courses/<?php echo $chosenTopic ?>/<?php echo $courseRun ?>/comments/<?php echo $row['id'];?>">Link</td>
+            <td><?php echo $comment_text_with_highlighting. '<br>'; ?></td>
+        </tr>
+        <?php  }
+        ?>            
+    </table>
+    <?php
+        sqlsrv_free_stmt($resultForTable);
+        sqlsrv_close($conn);
+    ?>
+</body>
+</html>

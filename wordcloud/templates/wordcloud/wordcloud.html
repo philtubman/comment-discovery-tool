@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8">
     <title>Word Selection Page</title>
-    <script src="../lib/d3/d3.js"></script>
-    <script src="../d3.layout.cloud.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="tableStyle.css">
+    <script src="/static/js/d3.js"></script>
+    <script src="/static/js/d3.layout.cloud.js"></script>
+    <script src="/static/js/jquery-3.2.1.min.js"></script>
+    <script src="/static/js/js-cookie.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/tablestyle.css">
 </head>
 <body>
     <p>The Word Cloud contains the top 200 most used words in the comments on the course that
@@ -14,11 +15,14 @@
     being drawn larger.</p>
     <p>Click on a word to show the comments featuring that word.</p>
 
-    <form action="loadTable.php" method="POST" style="display:none;">
-    <pre>
-    Author <input type="text" id="chosenWord" name="chosenWord">
-            <input type="submit" value="ADD RECORD" id="submitWord">
-    </pre></form>
+    <div id="wordcloud"></div>
+
+    <form action="{% url 'commenttable' %}" method="POST" style="display:none;">
+        {% csrf_token %}
+        <input type="text" id="chosenWord" name="chosenWord">
+        <input type="submit" value="ADD RECORD" id="submitWord">
+    </form>
     <br>
+    <script type="text/javascript" src="/static/js/singlewordcloud.js"></script>
 </body>
 </html>
