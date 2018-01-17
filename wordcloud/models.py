@@ -37,7 +37,7 @@ class UserAccess(models.Model):
     last_access = models.DateTimeField(auto_now=True)
 
 class CourseLog(models.Model):
-    user_id = models.CharField(max_length=36, unique=True)
+    user_id = models.CharField(max_length=36)
     return_url = models.CharField(max_length=255)
     course_id = models.CharField(max_length=255)
     access_time = models.DateTimeField(auto_now=True)
