@@ -28,7 +28,7 @@ class LTIConsumer(models.Model):
     consumer_key = models.CharField(max_length=255, unique=True)
     secret = models.CharField(max_length=36)
 
-class StopWord(models.Model):
+class BadWord(models.Model):
     word = models.CharField(max_length=24, unique=True)
 
 class UserAccess(models.Model):

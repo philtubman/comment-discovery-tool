@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Upload CSV Page</title>
+    <title>Upload StopWords</title>
 </head>
 <body>
-    <form action="{% url 'uploadcsv' %}" method="POST" enctype="multipart/form-data">
+    <form action="{% url 'uploadstopwords' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="file" name="csvfile" />
+        <input type="file" name="textfile" />
         <input type="submit" value="Upload" />
     </form>
 </body>

@@ -4,11 +4,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from urllib.parse import urlparse
 from ims_lti_py.tool_provider import DjangoToolProvider
-from .models import Comment, CommentTerms, CourseLog, LTIConsumer, Term, UserAccess
+from .models import BadWord, Comment, CommentTerms, CourseLog, LTIConsumer, Term, UserAccess
 from django.db import connection
 from io import TextIOWrapper
 import csv
 import re
+from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
 
 def index(request):
     return render(request, 'wordcloud/index.html')
@@ -122,13 +124,24 @@ def twowordsresults(request):
 
     return render(request, 'wordcloud/twowordsresults.html', {'comments': comments, 'chosen_word_1': chosen_word_1, 'chosen_word_2': chosen_word_2, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
-def uploadcsv(request):
+def uploadcomments(request):
+
+    def is_number(s):
+        try:
+            float(s)
+        except ValueError:
+            return False
+        else:
+            return True
 
     if request.method == 'POST':
         # Load all the current terms into a dictionary for lookup
         current_terms = {}
         for ct in Term.objects.all():
-            current_terms[ct.text] = ct.id
+            current_terms[ct.term] = ct.id
+
+        stop = set(stopwords.words('english'))
+        tokenizer = RegexpTokenizer(r'\w+')
 
         csvfile = request.FILES['csvfile']
         course,run = csvfile.name[0:csvfile.name.index('_')].split('-')
@@ -151,7 +164,9 @@ def uploadcsv(request):
             comment.likes = row['likes']
             comment.course_name = course
             comment.course_run = run
-            words = re.findall(r'\b\w+\b', comment.text)
+            words = tokenizer.tokenize(comment.text)
+            # Filter out numbers and stopwords.
+            words = [w for w in words if not is_number(w) if w.lower() not in stop]
             comment.word_count = len(words)
             comment.save()
 
@@ -176,7 +191,25 @@ def uploadcsv(request):
 
         return redirect('wordcloud')
     else:
-        return render(request, 'wordcloud/uploadcsv.html')
+        return render(request, 'wordcloud/uploadcomments.html')
+
+def uploadbadwords(request):
+
+    if request.method == 'POST':
+        current_badwords = BadWord.objects.values_list('word')
+
+        textfile = request.FILES['textfile']
+        wrapper = TextIOWrapper(textfile)
+        done = []
+        for line in wrapper:
+            badword = line.strip()
+            if badword not in current_badwords and badword not in done:
+                BadWord.objects.create(word=badword)
+                done.append(badword)
+
+        return redirect('wordcloud')
+    else:
+        return render(request, 'wordcloud/uploadbadwords.html')
 
 def terms(request):
 
@@ -193,11 +226,12 @@ def terms(request):
     sql = """SELECT term AS text, sum(count) AS size
                 FROM wordcloud_comment c
                 INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id
-                INNER JOIN wordcloud_term t ON t.id = ct.term_id"""
+                INNER JOIN wordcloud_term t ON t.id = ct.term_id
+                WHERE term NOT IN (SELECT word from wordcloud_badword)"""
 
     if 'chosen_word' in request.session:
         print(request.session['chosen_word'])
-        sql += " WHERE term != '{}'".format(request.session['chosen_word'])
+        sql += " AND term != '{}'".format(request.session['chosen_word'])
     
     sql += """ GROUP BY term
                 ORDER BY size DESC
@@ -210,7 +244,7 @@ def terms(request):
                 INNER JOIN wordcloud_term tb ON tb.id = ct.term_id_id
                 WHERE c.course_name = %s
                 AND c.course_run = %s
-                AND term NOT IN (SELECT word from stopwords)
+                AND term NOT IN (SELECT word from wordcloud_badword)
                 GROUP BY term
                 ORDER BY size DESC"""
     '''

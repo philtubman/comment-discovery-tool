@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Comment, CommentTerms, LTIConsumer, StopWord, Term
+from .models import Comment, CommentTerms, LTIConsumer, BadWord, Term
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
@@ -17,6 +17,6 @@ class CommentTermsAdmin(admin.ModelAdmin):
 class LTIConsumerAdmin(admin.ModelAdmin):
     model = LTIConsumer
 
-@admin.register(StopWord)
-class StopWordAdmin(admin.ModelAdmin):
-    model = StopWord
+@admin.register(BadWord)
+class BadWordAdmin(admin.ModelAdmin):
+    model = BadWord
