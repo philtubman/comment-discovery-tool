@@ -20,10 +20,6 @@ def index(request):
 @require_POST
 def ltilaunch(request):
 
-    if 'chosen_word' in request.session:
-        del request.session['chosen_word']
-        request.session.modified = True
-
     consumer_key = request.POST.get('oauth_consumer_key')
 
     if consumer_key:
@@ -57,6 +53,10 @@ def ltilaunch(request):
     return wordcloud(request)
 
 def wordcloud(request):
+
+    if 'chosen_word' in request.session:
+        del request.session['chosen_word']
+        request.session.modified = True
 
     return render(request, 'wordcloud/wordcloud.html')
 
