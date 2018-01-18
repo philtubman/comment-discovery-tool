@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -124,6 +125,7 @@ def twowordsresults(request):
 
     return render(request, 'wordcloud/twowordsresults.html', {'comments': comments, 'chosen_word_1': chosen_word_1, 'chosen_word_2': chosen_word_2, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
+@login_required(login_url='/admin/login/')
 def uploadcomments(request):
 
     def is_number(s):
@@ -193,6 +195,7 @@ def uploadcomments(request):
     else:
         return render(request, 'wordcloud/uploadcomments.html')
 
+@login_required(login_url='/admin/login/')
 def uploadbadwords(request):
 
     if request.method == 'POST':
