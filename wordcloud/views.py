@@ -1,17 +1,18 @@
 from django.contrib.auth.decorators import login_required
+from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from urllib.parse import urlparse
+
+from csv import DictReader
 from ims_lti_py.tool_provider import DjangoToolProvider
-from .models import BadWord, Comment, CommentTerms, CourseLog, LTIConsumer, Term, UserAccess
-from django.db import connection
 from io import TextIOWrapper
-import csv
-import re
-from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+from nltk.tokenize import RegexpTokenizer
+from urllib.parse import urlparse
+
+from .models import BadWord, Comment, CommentTerms, CourseLog, LTIConsumer, SearchLog, Term, UserAccess
 
 def index(request):
     return render(request, 'wordcloud/index.html')
@@ -38,15 +39,19 @@ def ltilaunch(request):
 
     request.session['course_title'] = lti_params['context_title']
 
+    return_url = lti_params.get('launch_presentation_return_url')
+
     # This is FutureLearn specific
-    if 'launch_presentation_return_url' in lti_params and lti_params['launch_presentation_return_url'] is not None:
+    if return_url and 'moocs.lancaster.ac.uk' in return_url:
         parts = urlparse(lti_params['launch_presentation_return_url']).path.split('/')
-        if len(parts) >=4:
+        if len(parts) >= 4:
             chosen_topic = parts[2]
             request.session['chosen_topic'] = 'Ebola' if 'sandpit' in course_id else chosen_topic
-            request.session['course_run'] = parts[3]
+            request.session['course_run'] = int(parts[3])
     else:
-        print('No return url')
+        # Test data.
+        request.session['chosen_topic'] = 'dyslexia'
+        request.session['course_run'] = 1
 
     _log_launch(lti_params['user_id'],lti_params['context_id'], lti_params.get('launch_presentation_return_url'))
 
@@ -73,30 +78,24 @@ def onewordresults(request):
 
     sql = """SELECT author_id, id, text, course_run
             FROM wordcloud_comment AS c
-            WHERE text LIKE %s
+            WHERE text LIKE %s AND c.course_name = %s AND course_run = %s
             ORDER BY timestamp DESC
             fetch first 100 rows only"""
-
-    '''
-    sql = """SELECT TOP(100) author_id, id, text, course_run
-            FROM wordcloud_comment AS c
-            WHERE text LIKE ? AND c.course_name = ? AND course_run = ?
-            ORDER BY timstamp DESC"""
-    '''
 
     chosen_word_like = "% {} %".format(chosen_word)
     comments = []
     with connection.cursor() as cursor:
-        cursor.execute(sql, [chosen_word_like])
+        cursor.execute(sql, [chosen_word_like, chosen_topic, course_run])
         for result in cursor:
             comment_text = result[2].replace(chosen_word, "<mark>{}</mark>".format(chosen_word))
             comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
-    #log_search(user_id, chosen_word, chosen_topic, course_run)
+    _log_search(user_id, chosen_word, chosen_topic, course_run)
     return render(request, 'wordcloud/onewordresults.html', {'comments': comments, 'chosen_word': chosen_word, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
 @require_POST
 def twowordsresults(request):
 
+    user_id = request.session['user_id']
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
 
@@ -105,7 +104,8 @@ def twowordsresults(request):
 
     sql = """SELECT author_id, id, text, course_run
             FROM wordcloud_comment AS c
-            WHERE text LIKE %s
+            WHERE c.course_name = %s AND course_run = %s
+            AND text LIKE %s
             AND text LIKE %s
             ORDER BY timestamp DESC
             fetch first 100 rows only"""
@@ -114,11 +114,11 @@ def twowordsresults(request):
     chosen_word_2_like = "% {} %".format(chosen_word_2)
     comments = []
     with connection.cursor() as cursor:
-        cursor.execute(sql, [chosen_word_1_like, chosen_word_2_like])
+        cursor.execute(sql, [chosen_topic, course_run, chosen_word_1_like, chosen_word_2_like])
         for result in cursor:
             comment_text = result[2].replace(chosen_word_1, "<mark>{}</mark>".format(chosen_word_1)).replace(chosen_word_2, "<mark>{}</mark>".format(chosen_word_2))
             comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
-    #log_search(user_id, chosen_word, chosen_topic, course_run)
+    _log_search(user_id, "{}+{}".format(chosen_word_1,chosen_word_2), chosen_topic, course_run)
 
     del request.session['chosen_word']
     request.session.modified = True
@@ -148,7 +148,7 @@ def uploadcomments(request):
         csvfile = request.FILES['csvfile']
         course,run = csvfile.name[0:csvfile.name.index('_')].split('-')
         wrapper = TextIOWrapper(csvfile)
-        reader = csv.DictReader(wrapper)
+        reader = DictReader(wrapper)
         for row in reader:
             comment = Comment()
             comment.author_id = row['author_id']
@@ -230,31 +230,22 @@ def terms(request):
                 FROM wordcloud_comment c
                 INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id
                 INNER JOIN wordcloud_term t ON t.id = ct.term_id
-                WHERE term NOT IN (SELECT word from wordcloud_badword)"""
+                WHERE course_name = %s AND course_run = %s
+                AND term NOT IN (SELECT word from wordcloud_badword)"""
 
     if 'chosen_word' in request.session:
-        print(request.session['chosen_word'])
-        sql += " AND term != '{}'".format(request.session['chosen_word'])
+        sql += " AND term != %s"
     
     sql += """ GROUP BY term
                 ORDER BY size DESC
                 fetch first 200 rows only"""
 
-    '''
-    sql = """SELECT TOP(200) tb.term AS text, sum(ct.count) AS size
-                FROM wordcloud_comments c
-                INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id_id
-                INNER JOIN wordcloud_term tb ON tb.id = ct.term_id_id
-                WHERE c.course_name = %s
-                AND c.course_run = %s
-                AND term NOT IN (SELECT word from wordcloud_badword)
-                GROUP BY term
-                ORDER BY size DESC"""
-    '''
-
+    params = [chosen_topic, course_run]
+    if 'chosen_word' in request.session:
+        params.append(request.session['chosen_word'])
     results = []
     with connection.cursor() as cursor:
-        cursor.execute(sql, [chosen_topic, course_run])
+        cursor.execute(sql, params)
         for result in cursor:
             results.append({'text': result[0], 'size': str(result[1])})
 
@@ -262,5 +253,10 @@ def terms(request):
 
 def _log_launch(user_id, course_id, return_url):
 
-    user_access = UserAccess.objects.get_or_create(user_id=user_id, defaults={'count': 1})
+    user_access, created = UserAccess.objects.get_or_create(user_id=user_id)
+    user_access.count += 1
+    user_access.save()
     CourseLog.objects.create(user_id=user_id, return_url=return_url, course_id=course_id)
+
+def _log_search(user_id, search, course_name, course_run):
+    SearchLog.objects.create(user_id=user_id, search=search, course_name=course_name, course_run=course_run)
