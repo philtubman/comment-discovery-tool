@@ -141,9 +141,9 @@ def uploadcomments(request):
             comment.likes = row['likes']
             comment.course_name = course
             comment.course_run = run
-            words = tokenizer.tokenize(comment.text)
+            words = [w.lower() for w in tokenizer.tokenize(comment.text)]
             # Filter out numbers and stopwords.
-            words = [w for w in words if not is_number(w) if w.lower() not in stop]
+            words = [w for w in words if not is_number(w) if w not in stop]
             comment.word_count = len(words)
             comment.save()
 
