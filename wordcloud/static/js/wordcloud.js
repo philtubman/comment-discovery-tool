@@ -1,5 +1,25 @@
 (function () {
 
+	var submitWords = function (newWord) {
+
+			if (newWord) {
+				chosenWords.push(newWord);
+			}
+
+			var f = document.forms['word-form'];
+
+			chosenWords.forEach(function (word) {
+
+				var input = document.createElement('input');
+				input.type = 'text';
+				input.name = 'chosen_words';
+				input.value = word;
+				f.appendChild(input);
+			});
+
+			f.submit();
+		};
+
     var dataLoaded = function (queryResult) {
 
         var fill = d3.scale.category20();
@@ -15,7 +35,6 @@
         var smallest_size;
 
         for (var key in queryResult) {
-            console.log(key);
             var current_value = Number(queryResult[key]["size"]);
             biggest_size = current_value;
             smallest_size = current_value;
@@ -66,18 +85,22 @@
                 // .text(function(d) { return d.text; });
                 /* Below is a proof of concept of making each word clickable, while being able to reference what that word is */
                 .text(function(d) { return d.text; })
-                .on("click", function (d, i){
-                    $("#chosenWord").val(d.text);
-                    $("#submitWord").trigger('click');
+                .on("click", function (d, i) {
+					submitWords(d.text);
                 });
         }
     }; // dataLoaded
 
     $.ajax({ url: '/data/terms', dataType: 'json' })
         .done(function(data, textStatus, jqXHR) {
-            console.log(data);
             dataLoaded(data);
         }).fail(function (jqXHR, textStatus, errorThrown) {
             console.log('FAILED');
         });
+
+	$('.word-pill').on('closed.bs.alert', function () {
+
+		chosenWords.splice(chosenWords.indexOf(this.dataset.word), 1);
+		submitWords();
+    });
 })();

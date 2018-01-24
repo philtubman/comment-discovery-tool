@@ -2,27 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Word Selection Page</title>
-    <script src="/static/js/d3.js"></script>
-    <script src="/static/js/d3.layout.cloud.js"></script>
-    <script src="/static/js/jquery-3.2.1.min.js"></script>
-    <script src="/static/js/js-cookie.js"></script>
-    <link rel="stylesheet" type="text/css" href="/static/css/tablestyle.css">
+    <title>Wordcloud</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/wordcloud.css">
+    <script type="text/javascript">
+
+        var chosenWords = [
+        {% for word in chosen_words %}
+        	'{{ word }}',
+        {% endfor %}
+		];
+    </script>
 </head>
 <body>
-    <p>The Word Cloud contains the top 200 most used words in the comments on the course that
+    <span>The Word Cloud contains the top 200 most used words in the comments on the course that
     you selected. The words are scaled based on the frequency, with more frequently used words
-    being drawn larger.</p>
-    <p>Click on a word to show the comments featuring that word.</p>
+    being drawn larger.</span>
 
-    <div id="wordcloud"></div>
+    {% if chosen_words %}
+	<span id="current-selection-label">Current selection:</span>
+    <div id="chosen-words">
+        {% for word in chosen_words %}
+        <div class="word-pill alert alert-info alert-dismissable" data-word="{{ word }}">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			{{ word }}
+		</div>
+        {% endfor %}
+	</div>
+    {% endif %}
 
-    <form action="{% url 'onewordresults' %}" method="POST" style="display:none;">
+    {% if chosen_words %}
+    <br />
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#wordcloud-collapse" aria-expanded="true" aria-controls="wordcloud-collapse">
+    View the Wordcloud
+    </button>
+    {% endif %}
+    <div {% if chosen_words %}class="collapse"{% endif %} id="wordcloud-collapse">
+        <div id="select-instruction">Click on a word to show the comments featuring that word.</div>
+        <div id="wordcloud"></div>
+    </div>
+
+    {% if comments %}
+    <div id="comments-title">The 100 most recent comments featuring your chosen words from the {{ chosen_topic }} course are shown below.</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Comment Link</th>
+                <th>Comment Text</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for comment in comments %}
+            <tr>
+                <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.id }}">Link</a></td>
+                <td>{{ comment.text|safe }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <form id="word-form"  action="{% url 'results' %}" method="POST" style="display: none;">
         {% csrf_token %}
-        <input type="text" id="chosenWord" name="chosenWord">
-        <input type="submit" value="ADD RECORD" id="submitWord">
     </form>
-    <br>
+
+    <script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/d3.js"></script>
+    <script type="text/javascript" src="/static/js/d3.layout.cloud.js"></script>
+    <script type="text/javascript" src="/static/js/popper.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.js"></script>
     <script type="text/javascript" src="/static/js/wordcloud.js"></script>
 </body>
 </html>

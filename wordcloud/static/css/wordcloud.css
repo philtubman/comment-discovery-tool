@@ -1,0 +1,59 @@
+body {
+    font-family: arial, sans-serif;
+    overflow-y: scroll;
+    height: 100%;
+}
+
+text:hover { 
+ 	opacity: .7 !important;
+ 	cursor: hand;
+ 	cursor: pointer;
+}
+
+table {
+	border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #000000;
+    text-align: left;
+    padding: 8px;
+}
+
+html {
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll;
+}
+
+.word-pill {
+    display: inline-block;
+}
+
+#chosen-words {
+    display: inline-block;
+}
+
+#chosen-words > .alert {
+    display: inline-block;
+    padding: 2px 3px 3px 3px;
+    font-size: 13px;
+}
+
+#chosen-words > .alert > .close {
+    font-size: 16px;
+	line-height: normal;
+	padding: 0;
+	margin-top: 1px;
+	margin-left: 2px;
+}
+
+#comments-title {
+    margin-top: 10px;
+}
+
+#select-instruction {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

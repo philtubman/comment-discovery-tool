@@ -59,71 +59,46 @@ def ltilaunch(request):
 
 def wordcloud(request):
 
-    if 'chosen_word' in request.session:
-        del request.session['chosen_word']
+    if 'chosen_words' in request.session:
+        del request.session['chosen_words']
         request.session.modified = True
 
     return render(request, 'wordcloud/wordcloud.html')
 
 @require_POST
-def onewordresults(request):
+def results(request):
 
     user_id = request.session['user_id']
     course_id = request.session['course_id']
     course_title = request.session['course_title']
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
-    chosen_word = request.POST['chosenWord']
-    request.session['chosen_word'] = chosen_word
+    chosen_words = request.POST.getlist('chosen_words')
+    request.session['chosen_words'] = chosen_words
 
     sql = """SELECT author_id, id, text, course_run
-            FROM wordcloud_comment AS c
-            WHERE text LIKE %s AND c.course_name = %s AND course_run = %s
-            ORDER BY timestamp DESC
+            FROM wordcloud_comment
+            WHERE course_name = %s AND course_run = %s"""
+
+    for word in chosen_words:
+        sql += " AND text like %s"
+
+    sql += """ ORDER BY timestamp DESC
             fetch first 100 rows only"""
 
-    chosen_word_like = "% {} %".format(chosen_word)
     comments = []
-    with connection.cursor() as cursor:
-        cursor.execute(sql, [chosen_word_like, chosen_topic, course_run])
-        for result in cursor:
-            comment_text = result[2].replace(chosen_word, "<mark>{}</mark>".format(chosen_word))
-            comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
-    _log_search(user_id, chosen_word, chosen_topic, course_run)
-    return render(request, 'wordcloud/onewordresults.html', {'comments': comments, 'chosen_word': chosen_word, 'chosen_topic': chosen_topic, 'course_run': course_run})
-
-@require_POST
-def twowordsresults(request):
-
-    user_id = request.session['user_id']
-    chosen_topic = request.session['chosen_topic']
-    course_run = request.session['course_run']
-
-    chosen_word_1 = request.session['chosen_word']
-    chosen_word_2 = request.POST['chosenWord2']
-
-    sql = """SELECT author_id, id, text, course_run
-            FROM wordcloud_comment AS c
-            WHERE c.course_name = %s AND course_run = %s
-            AND text LIKE %s
-            AND text LIKE %s
-            ORDER BY timestamp DESC
-            fetch first 100 rows only"""
-
-    chosen_word_1_like = "% {} %".format(chosen_word_1)
-    chosen_word_2_like = "% {} %".format(chosen_word_2)
-    comments = []
-    with connection.cursor() as cursor:
-        cursor.execute(sql, [chosen_topic, course_run, chosen_word_1_like, chosen_word_2_like])
-        for result in cursor:
-            comment_text = result[2].replace(chosen_word_1, "<mark>{}</mark>".format(chosen_word_1)).replace(chosen_word_2, "<mark>{}</mark>".format(chosen_word_2))
-            comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
-    _log_search(user_id, "{}+{}".format(chosen_word_1,chosen_word_2), chosen_topic, course_run)
-
-    del request.session['chosen_word']
-    request.session.modified = True
-
-    return render(request, 'wordcloud/twowordsresults.html', {'comments': comments, 'chosen_word_1': chosen_word_1, 'chosen_word_2': chosen_word_2, 'chosen_topic': chosen_topic, 'course_run': course_run})
+    if chosen_words:
+        with connection.cursor() as cursor:
+            params = [chosen_topic, course_run]
+            params.extend(["% {} %".format(w) for w in chosen_words])
+            cursor.execute(sql, params)
+            for result in cursor:
+                comment_text = result[2].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
+                for cw in chosen_words:
+                    comment_text = comment_text.replace(cw, "<mark>{}</mark>".format(cw))
+                comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
+        _log_search(user_id, chosen_words, chosen_topic, course_run)
+    return render(request, 'wordcloud/wordcloud.html', {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
 @login_required(login_url='/admin/login/')
 def uploadcomments(request):
@@ -233,18 +208,19 @@ def terms(request):
                 WHERE course_name = %s AND course_run = %s
                 AND term NOT IN (SELECT word from wordcloud_badword)"""
 
-    if 'chosen_word' in request.session:
-        sql += " AND term != %s"
+    if 'chosen_words' in request.session:
+        for cw in request.session['chosen_words']:
+            sql += " AND term != %s"
     
     sql += """ GROUP BY term
                 ORDER BY size DESC
                 fetch first 200 rows only"""
 
-    params = [chosen_topic, course_run]
-    if 'chosen_word' in request.session:
-        params.append(request.session['chosen_word'])
     results = []
     with connection.cursor() as cursor:
+        params = [chosen_topic, course_run]
+        if 'chosen_words' in request.session:
+            params.extend(request.session['chosen_words'])
         cursor.execute(sql, params)
         for result in cursor:
             results.append({'text': result[0], 'size': str(result[1])})
@@ -259,4 +235,4 @@ def _log_launch(user_id, course_id, return_url):
     CourseLog.objects.create(user_id=user_id, return_url=return_url, course_id=course_id)
 
 def _log_search(user_id, search, course_name, course_run):
-    SearchLog.objects.create(user_id=user_id, search=search, course_name=course_name, course_run=course_run)
+    SearchLog.objects.create(user_id=user_id, search='+'.join(search), course_name=course_name, course_run=course_run)
