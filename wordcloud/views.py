@@ -76,7 +76,7 @@ def results(request):
     chosen_words = request.POST.getlist('chosen_words')
     request.session['chosen_words'] = chosen_words
 
-    sql = """SELECT author_id, id, text, course_run
+    sql = """SELECT source_id, author_id, text
             FROM wordcloud_comment
             WHERE course_name = %s AND course_run = %s"""
 
@@ -96,7 +96,7 @@ def results(request):
                 comment_text = result[2].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
                 for cw in chosen_words:
                     comment_text = comment_text.replace(cw, "<mark>{}</mark>".format(cw))
-                comments.append({'author_id': result[0], 'id': str(result[1]), 'text': comment_text})
+                comments.append({'source_id': result[0], 'author_id': result[1], 'text': comment_text})
         _log_search(user_id, chosen_words, chosen_topic, course_run)
     return render(request, 'wordcloud/wordcloud.html', {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
@@ -126,6 +126,7 @@ def uploadcomments(request):
         reader = DictReader(wrapper)
         for row in reader:
             comment = Comment()
+            comment.source_id = row['id']
             comment.author_id = row['author_id']
             if row['parent_id'] == '':
                 row['parent_id'] = None

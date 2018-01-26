@@ -54,7 +54,7 @@
         <tbody>
         {% for comment in comments %}
             <tr>
-                <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.id }}">Link</a></td>
+                <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.source_id }}">Link</a></td>
                 <td>{{ comment.text|safe }}</td>
             </tr>
         {% endfor %}

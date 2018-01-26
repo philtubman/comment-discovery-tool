@@ -1,6 +1,7 @@
 from django.db import models
 
 class Comment(models.Model):
+    source_id = models.CharField(max_length=255)
     author_id = models.CharField(max_length=50)
     parent_id = models.IntegerField(null=True)
     step = models.CharField(max_length=6)
