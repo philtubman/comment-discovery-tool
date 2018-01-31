@@ -30,6 +30,9 @@ def ltilaunch(request):
 
     tool_provider = DjangoToolProvider(consumer_key, consumer.secret, request.POST)
 
+    if not tool_provider.is_launch_request():
+        return HttpResponse('Not a launch request', status=403)
+
     lti_params = tool_provider.to_params()
 
     # Set the session stuff in here.
@@ -122,7 +125,7 @@ def uploadcomments(request):
 
         csvfile = request.FILES['csvfile']
         course,run = csvfile.name[0:csvfile.name.index('_')].split('-')
-        wrapper = TextIOWrapper(csvfile)
+        wrapper = TextIOWrapper(csvfile, encoding='utf8')
         reader = DictReader(wrapper)
         for row in reader:
             comment = Comment()

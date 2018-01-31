@@ -1,7 +1,7 @@
 from django.db import models
 
 class Comment(models.Model):
-    source_id = models.CharField(max_length=255)
+    source_id = models.CharField(max_length=255, unique=True)
     author_id = models.CharField(max_length=50)
     parent_id = models.IntegerField(null=True)
     step = models.CharField(max_length=6)
