@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.db import connection
+from django.db.utils import IntegrityError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -53,7 +54,7 @@ def ltilaunch(request):
             request.session['course_run'] = int(parts[3])
     else:
         # Test data.
-        request.session['chosen_topic'] = 'dyslexia'
+        request.session['chosen_topic'] = 'humphry-davy'
         request.session['course_run'] = 1
 
     _log_launch(lti_params['user_id'],lti_params['context_id'], lti_params.get('launch_presentation_return_url'))
@@ -124,7 +125,7 @@ def uploadcomments(request):
         tokenizer = RegexpTokenizer(r'\w+')
 
         csvfile = request.FILES['csvfile']
-        course,run = csvfile.name[0:csvfile.name.index('_')].split('-')
+        course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1)
         wrapper = TextIOWrapper(csvfile, encoding='utf8')
         reader = DictReader(wrapper)
         for row in reader:
@@ -139,9 +140,7 @@ def uploadcomments(request):
             comment.step_number = row['step_number']
             comment.text = row['text']
             comment.timestamp = row['timestamp'][:-4]
-            if row['moderated'] == '':
-                row['moderated'] = None
-            comment.moderated = row['moderated']
+            comment.moderated = row['moderated'][:-4] if row['moderated'] else None
             comment.likes = row['likes']
             comment.course_name = course
             comment.course_run = run
@@ -149,7 +148,13 @@ def uploadcomments(request):
             # Filter out numbers and stopwords.
             words = [w for w in words if not is_number(w) if w not in stop]
             comment.word_count = len(words)
-            comment.save()
+
+            try:
+                comment.save()
+            except IntegrityError as ie:
+                # This is okay. Updated csvs are appended, so duplicates happen.
+                print("Comment {} exists already. Skipping ...".format(comment.source_id))
+                continue
 
             term_count = {}
             for word in words:

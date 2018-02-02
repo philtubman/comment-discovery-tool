@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rsync -avz ~fisha/git/wordcloudsite/ mis-toad:/srv/wordcloudsite

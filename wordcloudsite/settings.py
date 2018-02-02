@@ -13,10 +13,13 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 import yaml
 
+try:
+    config = yaml.safe_load(open('/etc/wordcloud.yml'))
+except FileNotFoundError as e:
+    config = {}
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -25,10 +28,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '+rjs&tzv-zc88+x20ilu*ct$hszuyp-s_9=tlv8@0d3a43t)u4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if config.get('debug', 'true') == 'true' else False
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*',]
 
 # Application definition
 
@@ -74,10 +76,6 @@ WSGI_APPLICATION = 'wordcloudsite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-try:
-    config = yaml.safe_load(open('/etc/wordcloud.yml'))
-except FileNotFoundError as e:
-    config = {}
 
 DATABASES = {
     'default': {
@@ -128,13 +126,20 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-try:
-    from .prod_settings import STATIC_ROOT
-except ModuleNotFoundError as e:
-    pass
+STATIC_ROOT = '%s/static_root/' % (BASE_DIR)
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+if config.get('caching', 'false') == 'true':
+    print('caching')
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': '/var/tmp/django_cache',
+        }
     }
-}
+else:
+    print(' not caching')
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
