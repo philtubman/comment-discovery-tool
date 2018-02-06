@@ -67,6 +67,10 @@ def wordcloud(request):
         del request.session['chosen_words']
         request.session.modified = True
 
+    if 'searched_comment_ids' in request.session:
+        del request.session['searched_comment_ids']
+        request.session.modified = True
+
     return render(request, 'wordcloud/wordcloud.html')
 
 @require_POST
@@ -80,7 +84,7 @@ def results(request):
     chosen_words = request.POST.getlist('chosen_words')
     request.session['chosen_words'] = chosen_words
 
-    sql = """SELECT source_id, author_id, text
+    sql = """SELECT id, source_id, author_id, text
             FROM wordcloud_comment
             WHERE course_name = %s AND course_run = %s"""
 
@@ -97,11 +101,14 @@ def results(request):
             params.extend(["% {} %".format(w) for w in chosen_words])
             cursor.execute(sql, params)
             for result in cursor:
-                comment_text = result[2].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
+                comment_text = result[3].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
                 for cw in chosen_words:
                     comment_text = comment_text.replace(cw, "<mark>{}</mark>".format(cw))
-                comments.append({'source_id': result[0], 'author_id': result[1], 'text': comment_text})
+                comments.append({'id': result[0], 'source_id': result[1], 'author_id': result[2], 'text': comment_text})
         _log_search(user_id, chosen_words, chosen_topic, course_run)
+
+    # Store the comment ids in the session for search refinement later
+    request.session['searched_comment_ids'] = [c['id'] for c in comments]
     return render(request, 'wordcloud/wordcloud.html', {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run})
 
 @login_required(login_url='/admin/login/')
@@ -216,6 +223,9 @@ def terms(request):
                 INNER JOIN wordcloud_term t ON t.id = ct.term_id
                 WHERE course_name = %s AND course_run = %s
                 AND term NOT IN (SELECT word from wordcloud_badword)"""
+
+    if 'searched_comment_ids' in request.session:
+        sql += ' AND c.id IN ({})'.format(','.join(map(str, request.session['searched_comment_ids'])))
 
     if 'chosen_words' in request.session:
         for cw in request.session['chosen_words']:
