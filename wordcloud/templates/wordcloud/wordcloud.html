@@ -33,11 +33,11 @@
 
     {% if chosen_words %}
     <br />
-    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#wordcloud-collapse" aria-expanded="true" aria-controls="wordcloud-collapse">
-    View the Wordcloud
+    <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#wordcloud-collapse" aria-expanded="true" aria-controls="wordcloud-collapse">
+    Hide/Show the Wordcloud
     </button>
     {% endif %}
-    <div {% if chosen_words %}class="collapse"{% endif %} id="wordcloud-collapse">
+    <div {% if chosen_words %}class="show"{% endif %} id="wordcloud-collapse">
         <div id="select-instruction">Click on a word to show the comments featuring that word.</div>
         <div id="wordcloud"></div>
     </div>

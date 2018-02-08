@@ -11,6 +11,7 @@ from ims_lti_py.tool_provider import DjangoToolProvider
 from io import TextIOWrapper
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
+from nltk import ne_chunk, pos_tag, Tree
 from urllib.parse import urlparse
 
 from .models import BadWord, Comment, CommentTerms, CourseLog, LTIConsumer, SearchLog, Term, UserAccess
@@ -82,6 +83,10 @@ def results(request):
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
     chosen_words = request.POST.getlist('chosen_words')
+
+    if not chosen_words:
+        return render(request, 'wordcloud/wordcloud.html')
+
     request.session['chosen_words'] = chosen_words
 
     sql = """SELECT id, source_id, author_id, text
@@ -151,9 +156,13 @@ def uploadcomments(request):
             comment.likes = row['likes']
             comment.course_name = course
             comment.course_run = run
-            words = [w.lower() for w in tokenizer.tokenize(comment.text)]
+            raw_tokens = tokenizer.tokenize(comment.text)
+            named_entities = [l[0][0] for l in ne_chunk(pos_tag(raw_tokens)) if type(l) == Tree]
+            words = [w.lower() for w in raw_tokens if w not in named_entities]
             # Filter out numbers and stopwords.
             words = [w for w in words if not is_number(w) if w not in stop]
+            # Add the named entities back in.
+            words.extend(named_entities)
             comment.word_count = len(words)
 
             try:
