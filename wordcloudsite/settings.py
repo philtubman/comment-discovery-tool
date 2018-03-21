@@ -15,7 +15,7 @@ import yaml
 
 try:
     config = yaml.safe_load(open('/etc/wordcloud.yml'))
-except FileNotFoundError as e:
+except:
     config = {}
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)

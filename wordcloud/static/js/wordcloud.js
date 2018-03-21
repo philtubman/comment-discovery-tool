@@ -95,12 +95,24 @@
         .done(function(data, textStatus, jqXHR) {
             dataLoaded(data);
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.log('FAILED');
+            console.log('Failed to load data. Error: ' + errorThrown);
         });
 
 	$('.word-pill').on('closed.bs.alert', function () {
 
 		chosenWords.splice(chosenWords.indexOf(this.dataset.word), 1);
 		submitWords();
+    });
+
+    $(function () {
+
+        $('.comment-link').click(function (e) {
+
+            $.ajax({ url: '/data/logclick', method: 'POST'
+                        , data: { commentId: e.target.dataset.commentId, csrfmiddlewaretoken: csrfToken }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                    console.log('Failed to log click. Error: ' + errorThrown);
+                });
+        });
     });
 })();

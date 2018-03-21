@@ -14,7 +14,7 @@ from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
 from urllib.parse import urlparse
 
-from .models import BadWord, Comment, CommentTerms, CourseLog, LTIConsumer, SearchLog, Term, UserAccess
+from .models import *
 
 def index(request):
     return render(request, 'wordcloud/index.html')
@@ -254,6 +254,17 @@ def terms(request):
             results.append({'text': result[0], 'size': str(result[1])})
 
     return JsonResponse(results, safe=False)
+
+def log_click(request):
+
+    user_id = request.session['user_id']
+    comment_id = request.POST.get('commentId')
+
+    if not comment_id:
+        return HttpResponse('No commentId supplied', status=400)
+
+    ClickLog.objects.create(user_id=user_id, comment_id=comment_id)
+    return HttpResponse(status=204)
 
 def _log_launch(user_id, course_id, return_url):
 

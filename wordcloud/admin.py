@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Comment, CommentTerms, LTIConsumer, BadWord, Term
+from .models import *
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
@@ -20,3 +20,15 @@ class LTIConsumerAdmin(admin.ModelAdmin):
 @admin.register(BadWord)
 class BadWordAdmin(admin.ModelAdmin):
     model = BadWord
+
+@admin.register(CourseLog)
+class CourseLogAdmin(admin.ModelAdmin):
+    model = CourseLog
+
+@admin.register(SearchLog)
+class CourseLogAdmin(admin.ModelAdmin):
+    model = SearchLog
+
+@admin.register(ClickLog)
+class ClickLogAdmin(admin.ModelAdmin):
+    model = ClickLog

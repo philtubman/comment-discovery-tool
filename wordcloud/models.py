@@ -48,3 +48,8 @@ class SearchLog(models.Model):
     search = models.CharField(max_length=255)
     course_name = models.CharField(max_length=255)
     course_run = models.SmallIntegerField()
+
+class ClickLog(models.Model):
+    user_id = models.CharField(max_length=36)
+    comment = models.ForeignKey('Comment', on_delete=models.CASCADE)
+    click_time = models.DateTimeField(auto_now=True)
