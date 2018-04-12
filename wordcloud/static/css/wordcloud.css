@@ -58,6 +58,10 @@ html {
     margin-bottom: 10px;
 }
 
+#wordcloud-container {
+    display: none;
+}
+
 #nodataimage {
     display: none;
 }
