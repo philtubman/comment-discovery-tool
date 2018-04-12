@@ -227,36 +227,39 @@ def terms(request):
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
 
-    # For the specified course run, select all the terms that occurred in a comment on the course, together
-    # with the total occurrences of that term across all the comments in the run.
-    sql = """SELECT term AS text, sum(count) AS size
-                FROM wordcloud_comment c
-                INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id
-                INNER JOIN wordcloud_term t ON t.id = ct.term_id
-                WHERE course_name = %s AND course_run = %s
-                AND term NOT IN (SELECT word from wordcloud_badword)"""
+    if Comment.objects.filter(course_name=chosen_topic, course_run=course_run).count():
+        # For the specified course run, select all the terms that occurred in a comment on the course, together
+        # with the total occurrences of that term across all the comments in the run.
+        sql = """SELECT term AS text, sum(count) AS size
+                    FROM wordcloud_comment c
+                    INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id
+                    INNER JOIN wordcloud_term t ON t.id = ct.term_id
+                    WHERE course_name = %s AND course_run = %s
+                    AND term NOT IN (SELECT word from wordcloud_badword)"""
 
-    if 'searched_comment_ids' in request.session:
-        sql += ' AND c.id IN ({})'.format(','.join(map(str, request.session['searched_comment_ids'])))
+        if 'searched_comment_ids' in request.session:
+            sql += ' AND c.id IN ({})'.format(','.join(map(str, request.session['searched_comment_ids'])))
 
-    if 'chosen_words' in request.session:
-        for cw in request.session['chosen_words']:
-            sql += " AND term != %s"
-    
-    sql += """ GROUP BY term
-                ORDER BY size DESC
-                fetch first 200 rows only"""
-
-    results = []
-    with connection.cursor() as cursor:
-        params = [chosen_topic, course_run]
         if 'chosen_words' in request.session:
-            params.extend(request.session['chosen_words'])
-        cursor.execute(sql, params)
-        for result in cursor:
-            results.append({'text': result[0], 'size': str(result[1])})
+            for cw in request.session['chosen_words']:
+                sql += " AND term != %s"
+        
+        sql += """ GROUP BY term
+                    ORDER BY size DESC
+                    fetch first 200 rows only"""
 
-    return JsonResponse(results, safe=False)
+        results = []
+        with connection.cursor() as cursor:
+            params = [chosen_topic, course_run]
+            if 'chosen_words' in request.session:
+                params.extend(request.session['chosen_words'])
+            cursor.execute(sql, params)
+            for result in cursor:
+                results.append({'text': result[0], 'size': str(result[1])})
+
+        return JsonResponse(results, safe=False)
+    else:
+        return JsonResponse({'status': 'NO DATA'})
 
 def log_click(request):
 

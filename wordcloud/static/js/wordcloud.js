@@ -93,7 +93,14 @@
 
     $.ajax({ url: '/data/terms', dataType: 'json' })
         .done(function(data, textStatus, jqXHR) {
-            dataLoaded(data);
+            if (data.status && data.status === 'NO DATA') {
+                $('#wordcloud-container').hide();
+                $('#nodataimage').show();
+            } else {
+                $('#wordcloud-container').show();
+                $('#nodataimage').hide();
+                dataLoaded(data);
+            }
         }).fail(function (jqXHR, textStatus, errorThrown) {
             console.log('Failed to load data. Error: ' + errorThrown);
         });
