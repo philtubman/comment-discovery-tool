@@ -13,8 +13,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
 from urllib.parse import urlparse
+import logging
 
 from .models import *
+
+logger = logging.getLogger(__name__)
 
 def index(request):
     return render(request, 'wordcloud/index.html')
@@ -47,7 +50,7 @@ def ltilaunch(request):
     return_url = lti_params.get('launch_presentation_return_url')
 
     # This is FutureLearn specific
-    if return_url and 'moocs.lancaster.ac.uk' in return_url:
+    if return_url and 'www.futurelearn.com' in return_url:
         parts = urlparse(lti_params['launch_presentation_return_url']).path.split('/')
         if len(parts) >= 4:
             chosen_topic = parts[2]
