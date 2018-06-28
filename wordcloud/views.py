@@ -58,8 +58,8 @@ def ltilaunch(request):
             request.session['course_run'] = int(parts[3])
     else:
         # Test data.
-        request.session['chosen_topic'] = 'humphry-davy'
-        request.session['course_run'] = 1
+        request.session['chosen_topic'] = 'dyslexia'
+        request.session['course_run'] = 4
 
     _log_launch(lti_params['user_id'],lti_params['context_id'], lti_params.get('launch_presentation_return_url'))
 
