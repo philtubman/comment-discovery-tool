@@ -59,7 +59,7 @@ def ltilaunch(request):
     else:
         # Test data.
         request.session['chosen_topic'] = 'dyslexia'
-        request.session['course_run'] = 4
+        request.session['course_run'] = 1
 
     _log_launch(lti_params['user_id'],lti_params['context_id'], lti_params.get('launch_presentation_return_url'))
 
