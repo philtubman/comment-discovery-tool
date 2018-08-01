@@ -18,12 +18,22 @@ class Comment(models.Model):
 class Term(models.Model):
     term = models.CharField(max_length=255, unique=True)
 
+class Hashtag(models.Model):
+    hashtag = models.CharField(max_length=255, unique=True)
+
 class CommentTerms(models.Model):
     comment = models.ForeignKey('Comment', on_delete=models.CASCADE)
     term = models.ForeignKey('Term', on_delete=models.CASCADE)
     count = models.SmallIntegerField()
     class Meta:
         unique_together = (('comment', 'term'),)
+
+class CommentHashtags(models.Model):
+    comment = models.ForeignKey('Comment', on_delete=models.CASCADE)
+    hashtag = models.ForeignKey('Hashtag', on_delete=models.CASCADE)
+    count = models.SmallIntegerField()
+    class Meta:
+        unique_together = (('comment', 'hashtag'),)
 
 class LTIConsumer(models.Model):
     consumer_key = models.CharField(max_length=255, unique=True)

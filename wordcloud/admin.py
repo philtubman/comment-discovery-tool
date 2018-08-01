@@ -9,9 +9,17 @@ class CommentAdmin(admin.ModelAdmin):
 class TermAdmin(admin.ModelAdmin):
     model = Term
 
+@admin.register(Hashtag)
+class HashtagAdmin(admin.ModelAdmin):
+    model = Hashtag
+
 @admin.register(CommentTerms)
 class CommentTermsAdmin(admin.ModelAdmin):
     model = CommentTerms
+
+@admin.register(CommentHashtags)
+class CommentHashtagsAdmin(admin.ModelAdmin):
+    model = CommentHashtags
 
 @admin.register(LTIConsumer)
 class LTIConsumerAdmin(admin.ModelAdmin):

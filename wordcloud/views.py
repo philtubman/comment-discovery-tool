@@ -136,8 +136,13 @@ def uploadcomments(request):
         for ct in Term.objects.all():
             current_terms[ct.term] = ct.id
 
+        current_hashtags = {}
+        for ch in Hashtag.objects.all():
+            current_hashtags[ch.term] = ch.id
+
         stop = set(stopwords.words('english'))
         tokenizer = RegexpTokenizer(r'\w+')
+        hashtagged_tokenizer = RegexpTokenizer(r'#\w+')
 
         csvfile = request.FILES['csvfile']
         course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1)
@@ -168,6 +173,8 @@ def uploadcomments(request):
             words.extend(named_entities)
             comment.word_count = len(words)
 
+            hashtags = hashtagged_tokenizer.tokenize(comment.text)
+
             try:
                 comment.save()
             except IntegrityError as ie:
@@ -193,6 +200,25 @@ def uploadcomments(request):
             for term_id, count in term_count.items():
                 comment_terms.append(CommentTerms(comment_id=comment.id, term_id=term_id, count=count))
             CommentTerms.objects.bulk_create(comment_terms)
+
+            hashtag_count = {}
+            for hashtag in hashtags:
+                if hashtag in current_hashtags:
+                    hashtag_id = current_hashtags[hashtag]
+                else:
+                    ht = Hashtag(hashtag=hashtag)
+                    ht.save()
+                    hashtag_id = ht.id
+                    current_hashtags[hashtag] = hashtag_id
+                if hashtag_id not in hashtag_count:
+                    hashtag_count[hashtag_id] = 1
+                else:
+                    hashtag_count[hashtag_id] = hashtag_count[hashtag_id] + 1
+
+            comment_hashtags = []
+            for hashtag_id, count in hashtag_count.items():
+                comment_hashtags.append(CommentHashtags(comment_id=comment.id, hashtag_id=hashtag_id, count=count))
+            CommentHashtags.objects.bulk_create(comment_hashtags)
 
         return redirect('wordcloud')
     else:
