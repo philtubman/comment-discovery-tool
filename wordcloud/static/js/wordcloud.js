@@ -91,19 +91,25 @@
         }
     }; // dataLoaded
 
-    $.ajax({ url: '/data/terms', dataType: 'json' })
-        .done(function(data, textStatus, jqXHR) {
-            if (data.status && data.status === 'NO DATA') {
-                $('#wordcloud-container').hide();
-                $('#nodataimage').show();
-            } else {
-                $('#wordcloud-container').show();
-                $('#nodataimage').hide();
-                dataLoaded(data);
-            }
-        }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.log('Failed to load data. Error: ' + errorThrown);
-        });
+    var getData = function (flavour) {
+
+        $.ajax({ url: '/data/terms?flavour=' + flavour, dataType: 'json' })
+            .done(function(data, textStatus, jqXHR) {
+                if (data.status && data.status === 'NO DATA') {
+                    $('#wordcloud-container').hide();
+                    $('#nodataimage').show();
+                } else {
+                    $('#wordcloud-container').show();
+                    $('#nodataimage').hide();
+                    $('#wordcloud').empty();
+                    dataLoaded(data);
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log('Failed to load data. Error: ' + errorThrown);
+            });
+        };
+
+    getData('terms');
 
 	$('.word-pill').on('closed.bs.alert', function () {
 
@@ -120,6 +126,16 @@
             }).fail(function (jqXHR, textStatus, errorThrown) {
                     console.log('Failed to log click. Error: ' + errorThrown);
                 });
+        });
+
+        $('#words-tab').click(function (e) {
+            alert('words');
+            getData('words');
+        });
+
+        $('#hashtags-tab').click(function (e) {
+            alert('hashtags');
+            getData('hashtags');
         });
     });
 })();

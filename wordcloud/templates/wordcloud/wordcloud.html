@@ -18,9 +18,18 @@
 </head>
 <body>
     <div id="wordcloud-container">
-        <span>The Word Cloud contains the top 200 most used words in the comments on the course that
-        you selected. The words are scaled based on the frequency, with more frequently used words
+        <span>The Word Cloud contains the top 200 most used words or hashtags in the comments on the course that
+        you selected. The words/hashtags are scaled based on the frequency, with more frequently used words/hashtags
         being drawn larger.</span>
+
+        <ul class="nav justify-content-center">
+            <li class="nav-item">
+				<a class="nav-link active" id="words-tab" href="#">Words</a>
+  			</li>
+  			<li class="nav-item">
+				<a class="nav-link" id="hashtags-tab" href="#">Hashtags</a>
+  			</li>
+		</ul>
 
         {% if chosen_words %}
         <span id="current-selection-label">Current selection:</span>
@@ -41,7 +50,7 @@
         </button>
         {% endif %}
         <div {% if chosen_words %}class="show"{% endif %} id="wordcloud-collapse">
-            <div id="select-instruction">Click on a word to show the comments featuring that word.</div>
+            <div id="select-instruction">Click on a word/hashtag to show the comments featuring that word/hashtag.</div>
             <div id="wordcloud"></div>
         </div>
 
