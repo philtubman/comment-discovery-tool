@@ -93,7 +93,7 @@
 
     var getData = function (flavour) {
 
-        $.ajax({ url: '/data/terms?flavour=' + flavour, dataType: 'json' })
+        $.ajax({ url: '/data/terms/' + flavour, dataType: 'json' })
             .done(function(data, textStatus, jqXHR) {
                 if (data.status && data.status === 'NO DATA') {
                     $('#wordcloud-container').hide();
@@ -109,7 +109,7 @@
             });
         };
 
-    getData('terms');
+    getData('words');
 
 	$('.word-pill').on('closed.bs.alert', function () {
 

@@ -243,7 +243,9 @@ def uploadbadwords(request):
     else:
         return render(request, 'wordcloud/uploadbadwords.html')
 
-def terms(request):
+def terms(request, flavour = 'words'):
+
+    print("flavour: {}".format(flavour))
 
     user_id = request.session['user_id']
     course_id = request.session['course_id']
