@@ -4,6 +4,7 @@ from django.db.utils import IntegrityError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from csv import DictReader
@@ -14,6 +15,9 @@ from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
 from urllib.parse import urlparse
 import logging
+
+from importlib import import_module
+from django.conf import settings
 
 from .models import *
 
@@ -117,7 +121,8 @@ def results(request):
 
     # Store the comment ids in the session for search refinement later
     request.session['searched_comment_ids'] = [c['id'] for c in comments]
-    return render(request, 'wordcloud/wordcloud.html', {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run})
+    params = {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run}
+    return render(request, 'wordcloud/wordcloud.html', params)
 
 @login_required(login_url='/admin/login/')
 def uploadcomments(request):

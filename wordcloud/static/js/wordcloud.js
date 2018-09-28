@@ -1,12 +1,26 @@
 (function () {
 
+    // We need to send the rendered session_key with every ajax call
+    $.ajaxSetup({
+        headers: { 'X-SessionId': sessionKey },
+        beforeSend: function(xhr, settings) {
+            xhr.setRequestHeader("X-SessionId", sessionKey);
+        }
+    });
+
 	var submitWords = function (newWord) {
 
 			if (newWord) {
-				chosenWords.push(newWord);
+			  chosenWords.push(newWord);
 			}
 
 			var f = document.forms['word-form'];
+
+			var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'session_key';
+      input.value = sessionKey;
+      f.appendChild(input);
 
 			chosenWords.forEach(function (word) {
 

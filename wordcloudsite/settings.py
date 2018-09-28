@@ -46,7 +46,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    #'django.contrib.sessions.middleware.SessionMiddleware',
+    'wordcloud.middleware.session_middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -66,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'wordcloud.context_processors.add_session_key',
             ],
         },
     },
@@ -127,6 +129,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = '%s/static_root/' % (BASE_DIR)
+
+CSRF_USE_SESSIONS = True
 
 if config.get('caching', 'false') == 'true':
     print('caching')
