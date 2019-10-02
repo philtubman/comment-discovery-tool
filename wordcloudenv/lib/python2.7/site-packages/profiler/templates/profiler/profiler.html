@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load staticfiles %}
+    <link rel="stylesheet" href="{% static 'css/profiler/jquery.dataTables.css' %}">
+    <script src="{% static 'js/profiler/jquery-1.11.0.min.js' %}"></script>
+    <script src="{% static 'js/profiler/jquery.dataTables.js' %}"></script>
+
+    <title></title>
+    <script>
+    $(document).ready(function() {
+        $('#profiling_output').dataTable({
+            "paging":   false
+        });
+    });
+</script>
+
+</head>
+<body>
+<pre>
+    {{ info }}
+</pre>
+<table id="profiling_output">
+<thead>
+    <tr>
+        {% for header in table_header %}
+            <th>{{ header }}</th>
+        {% endfor %}
+    </tr>
+</thead>
+<tbody>
+    {% for row in table_rows %}
+        <tr>
+            {% for cell in row %}
+                <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</tbody>
+
+</table>
+</body>
+</html>

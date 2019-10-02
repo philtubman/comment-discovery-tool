@@ -13,7 +13,8 @@ from io import TextIOWrapper
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
-from urllib.parse import urlparse
+#from urllib.parse import urlparse # Python 3
+from urlparse import urlparse # Python 2
 import logging
 
 from importlib import import_module
@@ -26,10 +27,73 @@ logger = logging.getLogger(__name__)
 def index(request):
     return render(request, 'wordcloud/index.html')
 
+# This function gets the text of a single comment by its FutureLearn ID
+def comment(request):
+    # Mandatory checks
+    if not 'id' in request.GET:
+        return JsonResponse({'status': 'NO DATA', 'comment' : ''})
+    id = request.GET['id']
+    if not id.isnumeric():
+        return JsonResponse({'status': 'NO DATA', 'comment' : ''})
+    # Query
+    comment = ""
+    print(id)
+    with connection.cursor() as cursor:
+        sql = """SELECT text FROM wordcloud_comment WHERE source_id = '""" + id + """'"""
+        cursor.execute(sql)
+        for result in cursor:
+            comment = result[0]
+        return JsonResponse({'comment' : comment})
+
+# This function returns JSON data containing the count of distinct courses and courses runs with their name
+def courses(request):
+    results = []
+    with connection.cursor() as cursor:
+        sql = """SELECT DISTINCT course_name, course_run FROM wordcloud_comment ORDER BY course_name ASC, course_run ASC"""
+        cursor.execute(sql)
+        count = 0
+        results.append({'count': count})
+        for result in cursor:
+            results.append({'course': result[0], 'run': str(result[1])})
+            count += 1
+        results[0]['count'] = count
+    return JsonResponse(results, safe=False)
+
+# This function returns the weeks available for a specific course and run in a JSON response
+def weeks(request):
+    results = []
+    # This function needs a course and a run to be able to work
+    if request.session['chosen_topic'] is None or request.session['course_run'] is None:
+        return JsonResponse(results, safe=False)
+    params = [request.session['chosen_topic'], request.session['course_run']]
+    with connection.cursor() as cursor:
+        sql = """SELECT DISTINCT week_number FROM wordcloud_comment WHERE course_name = %s AND course_run = %s ORDER BY week_number ASC"""
+        cursor.execute(sql, params)
+        for result in cursor:
+            results.append({'week': result[0]})
+    return JsonResponse(results, safe=False)
+
+# This function returns the weeks available for a specific course and run in a python list
+def getWeeks(request):
+    results = []
+    # This function needs a course and a run to be able to work
+    if request.session['chosen_topic'] is None or request.session['course_run'] is None:
+        return results
+    params = [request.session['chosen_topic'], request.session['course_run']]
+    with connection.cursor() as cursor:
+        sql = """SELECT DISTINCT week_number FROM wordcloud_comment WHERE course_name = %s AND course_run = %s ORDER BY week_number ASC"""
+        cursor.execute(sql, params)
+        for result in cursor:
+            results.append(result[0])
+    # Checks if the week in session exists and deletes it otherwise
+    if "week" in request.session:
+        if not request.session["week"] in results:
+            del request.session['week']
+    return results
+
 @csrf_exempt
 @require_POST
 def ltilaunch(request):
-
     consumer_key = request.POST.get('oauth_consumer_key')
 
     if consumer_key:
@@ -70,7 +134,7 @@ def ltilaunch(request):
     return wordcloud(request)
 
 def wordcloud(request):
-
+    # Resets search in session
     if 'chosen_words' in request.session:
         del request.session['chosen_words']
         request.session.modified = True
@@ -78,51 +142,97 @@ def wordcloud(request):
     if 'searched_comment_ids' in request.session:
         del request.session['searched_comment_ids']
         request.session.modified = True
+        
+    if 'week' in request.session:
+        del request.session['week']
+        request.session.modified = True
 
-    return render(request, 'wordcloud/wordcloud.html')
+    params = { "chosen_topic" : request.session['chosen_topic'], "course_run" : request.session['course_run']}
+    weeks = getWeeks(request)
+    params["weeks"] = weeks
+
+    return render(request, 'wordcloud/wordcloud.html', params)
 
 @require_POST
 def results(request):
-
     user_id = request.session['user_id']
     course_id = request.session['course_id']
     course_title = request.session['course_title']
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
     chosen_words = request.POST.getlist('chosen_words')
+    
+    if "week" in request.POST:
+        week = 0
+        try:
+            week = int(request.POST.get("week", 0))
+        except:
+            week = 0
+        if week > 0:
+            request.session["week"] = week
+        else:
+            if "week" in request.session:
+                del request.session["week"]
+            
+    # Checks for repeated words and errors
+    for word in chosen_words:
+        if "," in word:
+            chosen_words.remove(word)
+    request.session['chosen_words'] = chosen_words
+    
+    pageData = {'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run}
+    weeks = getWeeks(request)
+    pageData["weeks"] = weeks
+    if 'week' in request.session:
+        pageData["selectedWeek"] = request.session["week"]
+    pageData["chosen_topic"] = request.session['chosen_topic']
+    pageData["course_run"] = request.session['course_run']
 
     if not chosen_words:
-        return render(request, 'wordcloud/wordcloud.html')
+        # No search or seat has been reset, wiping searched comments
+        del request.session['searched_comment_ids']
+        request.session.modified = True
+        return render(request, 'wordcloud/wordcloud.html', pageData)
 
-    request.session['chosen_words'] = chosen_words
-
-    sql = """SELECT id, source_id, author_id, text
+    sql = """SELECT id, source_id, author_id, text, parent_id
             FROM wordcloud_comment
             WHERE course_name = %s AND course_run = %s"""
+    
+    if "week" in request.session:
+        sql += " AND week_number = %s"
 
     for word in chosen_words:
-        sql += " AND text like %s"
+        sql += " AND LOWER(text) like LOWER(%s)" # LOWER() for case insensitive results
 
     sql += """ ORDER BY timestamp DESC
             fetch first 100 rows only"""
-
+	
     comments = []
     if chosen_words:
         with connection.cursor() as cursor:
             params = [chosen_topic, course_run]
+            if "week" in request.session:
+                params.append(request.session["week"])
             params.extend(["% {} %".format(w) for w in chosen_words])
             cursor.execute(sql, params)
             for result in cursor:
                 comment_text = result[3].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
                 for cw in chosen_words:
+                    # The following lines will highlight the selected word also if the first letter is uppercase or lowercase
+                    if cw[0].isupper():
+                        cw = cw.lower()
+                    elif cw[0].islower():
+                        cw = cw.capitalize()
                     comment_text = comment_text.replace(cw, "<mark>{}</mark>".format(cw))
-                comments.append({'id': result[0], 'source_id': result[1], 'author_id': result[2], 'text': comment_text})
+                    # TODO: Improve with a proper case insensitive replacement, string doesn't support it but re (re.IGNORECASE) seems to do it
+                comments.append({'id': result[0], 'source_id': result[1], 'author_id': result[2], 'text': comment_text, 'parent_id' : result[4]})
         _log_search(user_id, chosen_words, chosen_topic, course_run)
 
     # Store the comment ids in the session for search refinement later
     request.session['searched_comment_ids'] = [c['id'] for c in comments]
-    params = {'comments': comments, 'chosen_words': chosen_words, 'chosen_topic': chosen_topic, 'course_run': course_run}
-    return render(request, 'wordcloud/wordcloud.html', params)
+    pageData["comments"] = comments
+    
+    return render(request, 'wordcloud/wordcloud.html', pageData)
 
 @login_required(login_url='/admin/login/')
 def uploadcomments(request):
@@ -223,7 +333,6 @@ def uploadbadwords(request):
         return render(request, 'wordcloud/uploadbadwords.html')
 
 def terms(request):
-
     user_id = request.session['user_id']
     course_id = request.session['course_id']
     course_title = request.session['course_title']
@@ -231,43 +340,76 @@ def terms(request):
     # FutureLearn specific
     chosen_topic = request.session['chosen_topic']
     course_run = request.session['course_run']
+    
+    #print("user_id: " + user_id + " | course_id: " + course_id + " | course_title: " + course_title + " | chosen_topic: " + chosen_topic + " | course_run: " + str(course_run))
 
     if Comment.objects.filter(course_name=chosen_topic, course_run=course_run).count():
         # For the specified course run, select all the terms that occurred in a comment on the course, together
         # with the total occurrences of that term across all the comments in the run.
-        sql = """SELECT term AS text, sum(count) AS size
-                    FROM wordcloud_comment c
-                    INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id
-                    INNER JOIN wordcloud_term t ON t.id = ct.term_id
-                    WHERE course_name = %s AND course_run = %s
-                    AND term NOT IN (SELECT word from wordcloud_badword)"""
-
-        if 'searched_comment_ids' in request.session:
-            sql += ' AND c.id IN ({})'.format(','.join(map(str, request.session['searched_comment_ids'])))
-
-        if 'chosen_words' in request.session:
-            for cw in request.session['chosen_words']:
-                sql += " AND term != %s"
+        sql = """SELECT term AS text, sum(count) AS size FROM wordcloud_comment c INNER JOIN wordcloud_commentterms ct ON c.id = ct.comment_id INNER JOIN wordcloud_term t ON t.id = ct.term_id WHERE course_name = %s AND course_run = %s AND term NOT IN (SELECT word from wordcloud_badword)"""
         
-        sql += """ GROUP BY term
-                    ORDER BY size DESC
-                    fetch first 200 rows only"""
+        if "week" in request.session:
+            sql += " AND week_number = %s"
 
+        commentsFound = 0
+        if 'searched_comment_ids' in request.session:
+            if request.session['searched_comment_ids']:
+                commentsFound = len(request.session['searched_comment_ids'])
+                sql += ' AND c.id IN ({})'.format(','.join(map(str, request.session['searched_comment_ids'])))
+
+        chosenWords = 0
+        if 'chosen_words' in request.session:
+            chosenWords = len(request.session['chosen_words'])
+            for cw in request.session['chosen_words']:
+                sql += " AND LOWER(term) != LOWER(%s)" # LOWER() for case insensitive results
+        
+        # Check if no comments are found and return no data if it's the case
+        if chosenWords > 0 and commentsFound == 0:
+            return JsonResponse({'status': 'NO DATA'})
+        
+        sql += """ AND LENGTH(term) > 2 GROUP BY term ORDER BY size DESC fetch first 200 rows only"""
+        
+        print(sql);
+        
         results = []
         with connection.cursor() as cursor:
             params = [chosen_topic, course_run]
+            if "week" in request.session:
+                params.append(request.session["week"])
             if 'chosen_words' in request.session:
                 params.extend(request.session['chosen_words'])
             cursor.execute(sql, params)
+            nbrResults = 0
             for result in cursor:
-                results.append({'text': result[0], 'size': str(result[1])})
+                nbrResults = nbrResults + 1
+                # Case insensitive fix: un/capitalize and check if already in result, if yes, keeping highest size and adding size of smallest, otherwise the opposite
+                wasInResult = 0
+                wordCaseReverted = ""
+                if result[0][0].isupper():
+                    wordCaseReverted = result[0].lower()
+                elif result[0][0].islower():
+                    wordCaseReverted = result[0].capitalize()
+                for resultSaved in results:
+                    if resultSaved["text"] == wordCaseReverted: # The word is already in result with a different case
+                        wasInResult = 1
+                        print("found one: " + result[0] + " > " + wordCaseReverted)
+                        resultSaved["size"] = int(resultSaved["size"]) + int(result[1]) # Updating the size of both words combined
+                        if resultSaved["size"] < result[1]: # The new word is bigger, replacing string
+                            resultSaved["text"] = result[0]
+                            break
+                        else:
+                            break
+                            # TODO: I'm not satisfied with this solution, performance wise it's not very good (lots of loops)
+                
+                if not wasInResult:
+                    results.append({'text': result[0], 'size': str(result[1])})
 
+        print("nbrResults: " + str(nbrResults));
         return JsonResponse(results, safe=False)
     else:
         return JsonResponse({'status': 'NO DATA'})
 
 def log_click(request):
-
     user_id = request.session['user_id']
     comment_id = request.POST.get('commentId')
 
@@ -278,7 +420,6 @@ def log_click(request):
     return HttpResponse(status=204)
 
 def _log_launch(user_id, course_id, return_url):
-
     user_access, created = UserAccess.objects.get_or_create(user_id=user_id)
     user_access.count += 1
     user_access.save()

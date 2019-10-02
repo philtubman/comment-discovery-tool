@@ -1,4 +1,5 @@
-(function () {
+// The following line is commented to be able to call the functions from outside the scope
+//(function () {
 
     // We need to send the rendered session_key with every ajax call
     $.ajaxSetup({
@@ -7,7 +8,7 @@
             xhr.setRequestHeader("X-SessionId", sessionKey);
         }
     });
-
+	
 	var submitWords = function (newWord) {
 
 			if (newWord) {
@@ -136,4 +137,5 @@
                 });
         });
     });
-})();
+// The following line is commented to be able to call the functions from outside the scope
+//})();

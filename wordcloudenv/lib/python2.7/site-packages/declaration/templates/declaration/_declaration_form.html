@@ -1,0 +1,9 @@
+<div class="declaration-form">
+    <h1>Are you an HCP?</h1>
+    <p><strong>I am</strong> a Healthcare professional</p>
+    <form action="{% url 'declaration:form' %}" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit" name="declaration" value="yes">I confirm I am a HCP</button>
+    </form>
+</div>

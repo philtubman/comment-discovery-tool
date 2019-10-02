@@ -1,0 +1,25 @@
+Metadata-Version: 2.0
+Name: django-declaration-middleware
+Version: 0.1.0
+Summary: Django application to force users to accepta declaration before accessing a set of urls
+Home-page: https://github.com/incuna/django-declaration-middleware
+Author: Incuna Ltd
+Author-email: admin@incuna.com
+License: BSD
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Web Environment
+Classifier: Framework :: Django
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Topic :: Software Development
+Classifier: Topic :: Utilities
+
+UNKNOWN
+
+

@@ -28,7 +28,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '+rjs&tzv-zc88+x20ilu*ct$hszuyp-s_9=tlv8@0d3a43t)u4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if config.get('debug', 'true') == 'true' else False
+#DEBUG = True if config.get('debug', 'true') == 'true' else False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*',]
 
@@ -46,8 +47,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    #'django.contrib.sessions.middleware.SessionMiddleware',
-    'wordcloud.middleware.session_middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    #'wordcloud.middleware.session_middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -73,22 +74,39 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'wordcloudsite.wsgi.application'
+#WSGI_APPLICATION = 'wordcloudsite.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-
+# FROM PRODUCTION CONFIG COMMENTED OUT
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'wordcloud', 
+#        'USER': config.get('dbuser', 'wordclouduser'),
+#        'PASSWORD': config.get('dbpass', 'secret'),
+#        'HOST': config.get('dbhost', '127.0.0.1'),
+#        'PORT': config.get('dbport', '5432'),
+#    }
+#}
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'wordcloud', 
-        'USER': config.get('dbuser', 'wordclouduser'),
-        'PASSWORD': config.get('dbpass', 'secret'),
-        'HOST': config.get('dbhost', '127.0.0.1'),
-        'PORT': config.get('dbport', '5432'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'wordcloud',
+        'USER': 'wordclouduser',
+        'PASSWORD': 'wordcloud',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
+
+
+
+
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
