@@ -5,9 +5,8 @@
     <title>Wordcloud</title>
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/static/css/wordcloud.css">
-    <script type="text/javascript">
-
-        var chosenWords = [
+	<script type="text/javascript">
+		var chosenWords = [
         {% for word in chosen_words %}
         	'{{ word }}',
         {% endfor %}
@@ -15,14 +14,41 @@
 
         var csrfToken = '{{ csrf_token }}';
         var sessionKey = '{{ session_key }}';
+	
+		function week(week) {
+			document.getElementById("week").value = week;
+			submitWords();
+		}
+		
+		function resetSearch() {
+			document.getElementById("reset-search").submit();
+		}
+		
+		function getParent(id, displayTarget) {
+			if (document.getElementById(displayTarget).style.display != "inline-block") {
+				$.getJSON('/data/comment?id=' + id, function(data) {
+					document.getElementById(displayTarget).innerHTML = '"' + data["comment"] + '"<br />';
+					document.getElementById(displayTarget).style.display = "inline-block";
+				});
+			} else {
+				document.getElementById(displayTarget).style.display = "none";
+			}
+		}
     </script>
 </head>
 <body>
     <div id="wordcloud-container">
-        <span>The Word Cloud contains the top 200 most used words in the comments on the course that
-        you selected. The words are scaled based on the frequency, with more frequently used words
-        being drawn larger.</span>
-
+		<div id="coursetitle">Course {{ chosen_topic }} #{{ course_run }} 
+			<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#help" aria-expanded="true" aria-controls="help"><b>?</b></button>
+		</div>
+		
+		<div id="help" class="collapse">
+			<h5>Information &amp; Help</h2>
+			<span>The Word Cloud contains the top 200 most used words in the comments on your research.<br />
+			The words are scaled based on the frequency, with more frequently used words being drawn larger.<br />
+			Click on a word to show the comments featuring that word.</span>
+		</div>
+		
         {% if chosen_words %}
         <span id="current-selection-label">Current selection:</span>
         <div id="chosen-words">
@@ -36,19 +62,25 @@
         {% endif %}
 
         {% if chosen_words %}
-        <br />
-        <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#wordcloud-collapse" aria-expanded="true" aria-controls="wordcloud-collapse">
-        Hide/Show the Wordcloud
-        </button>
-        {% endif %}
+		<div id="controlbuttons">
+			<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#wordcloud-collapse" aria-expanded="true" aria-controls="wordcloud-collapse">
+			Hide/Show the Wordcloud
+			</button>
+			<button class="btn btn-primary btn-sm" type="button" onclick="resetSearch();">Reset search</button>
+        </div>{% endif %}
+		
         <div {% if chosen_words %}class="show"{% endif %} id="wordcloud-collapse">
-            <div id="select-instruction">Click on a word to show the comments featuring that word.</div>
+			<div id="abovethecloud">
+				<div id="weekstabs">
+					<div class="weektab weektaball{% if not selectedWeek %} selectedtab{% endif %}"><a href="#" onclick="week(0);">All weeks{% if not selectedWeek %} &#10004;{% endif %}</a></div>{% for week in weeks %}<div class="weektab{% if selectedWeek == week %} selectedtab{% endif %}"><a href="#" onclick="week({{ week }});">Week {{ week }}{% if selectedWeek == week %} &#10004;{% endif %}<span></span></a></div>{% endfor %}
+				</div>
+				</div>
             <div id="wordcloud"></div>
         </div>
 
         {% if comments %}
         <div id="comments-title">The 100 most recent comments featuring your chosen words from the {{ chosen_topic }} course are shown below.</div>
-        <table>
+        <table id="commentsTable">
             <thead>
                 <tr>
                     <th>Comment Link</th>
@@ -59,22 +91,32 @@
             {% for comment in comments %}
                 <tr>
                     <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.source_id }}" class="comment-link" data-comment-id="{{ comment.id }}">Join this Conversation</a></td>
-                    <td>{{ comment.text|safe }}</td>
+                    <td>
+					{% if comment.parent_id %}
+						<a href="#" onclick="getParent({{ comment.parent_id }}, 'parent-comment-{{ comment.id }}');" class="showParentComment">In response to another comment (#{{ comment.parent_id }})</a><br />
+						<span id="parent-comment-{{ comment.id }}" class="parentComment">Test<br /></span>
+					{% endif %}
+					{{ comment.text|safe }}
+					</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
         {% endif %}
-
-        <form id="word-form"  action="{% url 'results' %}" method="POST" style="display: none;">
+		
+        <form id="word-form" action="{% url 'results' %}" method="POST" style="display: none;">
+			<input type="hidden" id="week" name="week" value="{% if selectedWeek %}{{ selectedWeek }}{% else %}0{% endif %}">
+            {% csrf_token %}
+        </form>
+		<form id="reset-search" action="{% url 'results' %}" method="POST" style="display: none;">
+			<input type="hidden" id="week" name="week" value="0">
             {% csrf_token %}
         </form>
     </div> <!-- /wordcloud-container -->
     <div id="nodataimage">
         <img src="/static/images/comments_still_processing.jpg" />
     </div>
-
-    <script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="/static/js/d3.js"></script>
     <script type="text/javascript" src="/static/js/d3.layout.cloud.js"></script>
     <script type="text/javascript" src="/static/js/popper.js"></script>
