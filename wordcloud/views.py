@@ -13,8 +13,7 @@ from io import TextIOWrapper
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
-#from urllib.parse import urlparse # Python 3
-from urlparse import urlparse # Python 2
+from urllib.parse import urlparse # Python 3
 import logging
 
 from importlib import import_module
