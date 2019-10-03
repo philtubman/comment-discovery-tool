@@ -1,16 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Course Selection Page</title>
-    <link rel="stylesheet" type="text/css" href="code/tableStyle.css">
+    <meta charset="utf-8">
+    <title>Wordcloud Index</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/wordcloud.css">
+	<script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		function getCourses() {
+			$.getJSON('data/courses', function(data) {
+				course_count = data[0]["count"];
+				if (!course_count)
+					return;
+				$("#launch_presentation_return_url").empty();
+				for (i = 1; i <= course_count; i++)
+					$("#launch_presentation_return_url").append(new Option(data[i]["course"] + " #" + data[i]["run"], "https://www.futurelearn.com/courses/" + data[i]["course"] + "/" + data[i]["run"] + "/exercises/257433/return-to-step"));
+			});
+		}
+	</script>
 </head>
-<body>
-    <div id="instructions">
-        <p>Select the course for which you want the comments to be visualised.</p>
-    </div>
-    <form action="code/makingATable.php" method="post" >
-        Enter the course name (e.g. "dyslexia" or "Ebola"): <input type="text" id="chosenTopic" name="chosenTopic">
-           <input type="submit" value="Select Course" id="submitWord">
-    </form>
+<body onLoad="getCourses();">
+	<span>Welcome to the wordcloud app. Select a course and run to generate a wordcloud.</span>
+    <form action='ltilaunch/' class='lti-launch' encType='application/x-www-form-urlencoded' method='post' name='lti-launch' id='FLFaker'> <!-- To open in designated separate window: target='fl_exercise' -->
+	<!-- Mandatory POST parameters -->
+	<input name='oauth_consumer_key' type='hidden' value='www.futurelearn.com'>
+	<input name='lti_message_type' type='hidden' value='basic-lti-launch-request'>
+	<!-- Custom POST parameters influencing the wordcloud (effectively only 2 parameters in between "/" following "courses") -->
+	<select name="launch_presentation_return_url" id="launch_presentation_return_url">
+	<option value="">Loading courses...</option> <!-- Removed at page initialisation and replaced with JSON data -->
+	</select>
+	<!-- Ignored parameters, kept empty for legacy -->
+	<input name='oauth_signature_method' type='hidden' value=''>
+	<input name='oauth_timestamp' type='hidden' value=''>
+	<input name='oauth_nonce' type='hidden' value=''>
+	<input name='oauth_version' type='hidden' value=''>
+	<input name='context_id' type='hidden' value=''>
+	<input name='context_title' type='hidden' value=''>
+	<input name='lti_version' type='hidden' value=''>
+	<input name='resource_link_id' type='hidden' value=''>
+	<input name='resource_link_title' type='hidden' value=''>
+	<input name='roles' type='hidden' value=''>
+	<input name='user_id' type='hidden' value=''>
+	<input name='oauth_signature' type='hidden' value=''>
+	<input class='a-button' type='submit' value='Access Wordcloud'>
+	</form>
 </body>
 </html>
