@@ -16,6 +16,8 @@ from nltk import ne_chunk, pos_tag, Tree
 from urllib.parse import urlparse # Python 3
 import logging
 
+import numpy
+
 from importlib import import_module
 from django.conf import settings
 
@@ -189,7 +191,8 @@ def results(request):
 
     if not chosen_words:
         # No search or seat has been reset, wiping searched comments
-        del request.session['searched_comment_ids']
+        if 'searched_comment_ids' in request.session:
+            del request.session['searched_comment_ids']
         request.session.modified = True
         return render(request, 'wordcloud/wordcloud.html', pageData)
 
@@ -254,9 +257,9 @@ def uploadcomments(request):
         tokenizer = RegexpTokenizer(r'\w+')
 
         csvfile = request.FILES['csvfile']
-        course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1)
+        course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1) # fails if the CSV isn't named as it should from FutureLearn
         wrapper = TextIOWrapper(csvfile, encoding='utf8')
-        reader = DictReader(wrapper)
+        reader = DictReader(csvfile)
         for row in reader:
             comment = Comment()
             comment.source_id = row['id']
@@ -274,7 +277,11 @@ def uploadcomments(request):
             comment.course_name = course
             comment.course_run = run
             raw_tokens = tokenizer.tokenize(comment.text)
-            named_entities = [l[0][0] for l in ne_chunk(pos_tag(raw_tokens)) if type(l) == Tree]
+            # Added try and except here as it sometimes fails to read some unicode characters
+            try:
+                named_entities = [l[0][0] for l in ne_chunk(pos_tag(raw_tokens)) if type(l) == Tree]
+            except:
+                continue
             words = [w.lower() for w in raw_tokens if w not in named_entities]
             # Filter out numbers and stopwords.
             words = [w for w in words if not is_number(w) if w not in stop]
@@ -286,7 +293,7 @@ def uploadcomments(request):
                 comment.save()
             except IntegrityError as ie:
                 # This is okay. Updated csvs are appended, so duplicates happen.
-                print("Comment {} exists already. Skipping ...".format(comment.source_id))
+                #print("Comment {} exists already. Skipping ...".format(comment.source_id)) # Uncommenting this line will generates lots of console outputs which slows down execution
                 continue
 
             term_count = {}
@@ -308,7 +315,8 @@ def uploadcomments(request):
                 comment_terms.append(CommentTerms(comment_id=comment.id, term_id=term_id, count=count))
             CommentTerms.objects.bulk_create(comment_terms)
 
-        return redirect('wordcloud')
+        pageData = {'uploadstatus': "Comments updated."}
+        return render(request, 'wordcloud/uploadcomments.html', pageData)
     else:
         return render(request, 'wordcloud/uploadcomments.html')
 

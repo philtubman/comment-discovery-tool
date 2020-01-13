@@ -5,6 +5,10 @@
     <title>Upload Comments</title>
 </head>
 <body>
+	{% if uploadstatus %}
+		<p><b>{{ uploadstatus }}</b></p>
+	{% endif %}
+	
     <form action="{% url 'uploadcomments' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="file" name="csvfile" />
