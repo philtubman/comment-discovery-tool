@@ -258,8 +258,8 @@ def uploadcomments(request):
 
         csvfile = request.FILES['csvfile']
         course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1) # fails if the CSV isn't named as it should from FutureLearn
-        wrapper = TextIOWrapper(csvfile, encoding='utf8')
-        reader = DictReader(csvfile)
+        wrapper = TextIOWrapper(csvfile, encoding='utf-8')
+        reader = DictReader(wrapper)
         for row in reader:
             comment = Comment()
             comment.source_id = row['id']
