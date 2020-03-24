@@ -14,8 +14,7 @@ from io import TextIOWrapper
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
-#from urllib.parse import urlparse # Python 3
-from urlparse import urlparse # Python 2
+from urlparse import urlparse
 import logging
 
 import numpy
@@ -137,6 +136,7 @@ def ltilaunch(request):
     return wordcloud(request)
 
 @ensure_csrf_cookie
+@csrf_protect
 def wordcloud(request):
     # Resets search in session
     if 'chosen_words' in request.session:
@@ -158,6 +158,7 @@ def wordcloud(request):
     return render(request, 'wordcloud/wordcloud.html', params)
 
 @ensure_csrf_cookie
+@csrf_protect
 @require_POST
 def results(request):
     user_id = request.session['user_id']
