@@ -14,7 +14,8 @@ from io import TextIOWrapper
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk import ne_chunk, pos_tag, Tree
-from urlparse import urlparse
+#from urllib.parse import urlparse # Python 3
+from urlparse import urlparse # Python 2
 import logging
 
 import numpy
