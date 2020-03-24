@@ -136,6 +136,7 @@ def ltilaunch(request):
     return wordcloud(request)
 
 @ensure_csrf_cookie
+@csrf_protect
 def wordcloud(request):
     # Resets search in session
     if 'chosen_words' in request.session:
@@ -157,6 +158,7 @@ def wordcloud(request):
     return render(request, 'wordcloud/wordcloud.html', params)
 
 @ensure_csrf_cookie
+@csrf_protect
 @require_POST
 def results(request):
     user_id = request.session['user_id']
