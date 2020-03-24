@@ -92,7 +92,7 @@ def getWeeks(request):
             del request.session['week']
     return results
 
-@csrf_exempt
+@ensure_csrf_cookie
 @require_POST
 def ltilaunch(request):
     consumer_key = request.POST.get('oauth_consumer_key')
