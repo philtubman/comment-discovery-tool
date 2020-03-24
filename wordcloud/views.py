@@ -154,6 +154,7 @@ def wordcloud(request):
 
     return render(request, 'wordcloud/wordcloud.html', params)
 
+@csrf_exempt
 @require_POST
 def results(request):
     user_id = request.session['user_id']
@@ -190,7 +191,7 @@ def results(request):
     pageData["course_run"] = request.session['course_run']
 
     if not chosen_words:
-        # No search or seat has been reset, wiping searched comments
+        # No search or search has been reset, wiping searched comments
         if 'searched_comment_ids' in request.session:
             del request.session['searched_comment_ids']
         request.session.modified = True
