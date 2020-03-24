@@ -111,10 +111,11 @@
 		<form id="reset-search" action="{% url 'results' %}" method="POST" style="display: none;">
 			<input type="hidden" id="week" name="week" value="0">
             {% csrf_token %}
+			<input type="hidden" name="session_key" value="{{ session_key }}">
         </form>
     </div> <!-- /wordcloud-container -->
     <div id="nodataimage">
-        <img src="/static/images/comments_still_processing.jpg" />
+        <img src="/static/images/black_dog_error.jpg" />
     </div>
 	<script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="/static/js/d3.js"></script>
