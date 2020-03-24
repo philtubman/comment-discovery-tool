@@ -136,6 +136,7 @@ def ltilaunch(request):
 
     return wordcloud(request)
 
+@ensure_csrf_cookie
 def wordcloud(request):
     # Resets search in session
     if 'chosen_words' in request.session:
