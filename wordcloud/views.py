@@ -26,12 +26,10 @@ from .models import *
 
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
 def index(request):
     return render(request, 'wordcloud/index.html')
 
 # This function gets the text of a single comment by its FutureLearn ID
-@csrf_exempt
 def comment(request):
     # Mandatory checks
     if not 'id' in request.GET:
@@ -50,7 +48,6 @@ def comment(request):
         return JsonResponse({'comment' : comment})
 
 # This function returns JSON data containing the count of distinct courses and courses runs with their name
-@csrf_exempt
 def courses(request):
     results = []
     with connection.cursor() as cursor:
@@ -65,7 +62,6 @@ def courses(request):
     return JsonResponse(results, safe=False)
 
 # This function returns the weeks available for a specific course and run in a JSON response
-@csrf_exempt
 def weeks(request):
     results = []
     # This function needs a course and a run to be able to work
@@ -80,7 +76,6 @@ def weeks(request):
     return JsonResponse(results, safe=False)
 
 # This function returns the weeks available for a specific course and run in a python list
-@csrf_exempt
 def getWeeks(request):
     results = []
     # This function needs a course and a run to be able to work
@@ -140,7 +135,6 @@ def ltilaunch(request):
 
     return wordcloud(request)
 
-@csrf_exempt
 def wordcloud(request):
     # Resets search in session
     if 'chosen_words' in request.session:
@@ -161,7 +155,6 @@ def wordcloud(request):
 
     return render(request, 'wordcloud/wordcloud.html', params)
 
-@csrf_exempt
 @require_POST
 def results(request):
     user_id = request.session['user_id']
@@ -330,7 +323,6 @@ def uploadcomments(request):
 
 @login_required(login_url='/admin/login/')
 def uploadbadwords(request):
-
     if request.method == 'POST':
         current_badwords = BadWord.objects.values_list('word')
 
@@ -347,7 +339,6 @@ def uploadbadwords(request):
     else:
         return render(request, 'wordcloud/uploadbadwords.html')
 
-@csrf_exempt
 def terms(request):
     user_id = request.session['user_id']
     course_id = request.session['course_id']
