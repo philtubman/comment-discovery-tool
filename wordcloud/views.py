@@ -94,7 +94,7 @@ def getWeeks(request):
             del request.session['week']
     return results
 
-@ensure_csrf_cookie
+@csrf_exempt
 @require_POST
 def ltilaunch(request):
     consumer_key = request.POST.get('oauth_consumer_key')
@@ -156,7 +156,7 @@ def wordcloud(request):
 
     return render(request, 'wordcloud/wordcloud.html', params)
 
-@csrf_exempt
+@ensure_csrf_cookie
 @require_POST
 def results(request):
     user_id = request.session['user_id']
