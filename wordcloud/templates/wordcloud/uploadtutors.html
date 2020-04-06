@@ -2,20 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Upload Comments</title>
+    <title>Upload Tutors</title>
 </head>
 <body>
 	{% if uploadstatus %}
 		<p>
 			<b>{{ uploadstatus }}</b>
-			{% if deleted_from_FL_nbr %}
-				<br />
-				{{ deleted_from_FL_nbr }} comments were deleted since last import.
-			{% endif %}
 		</p>
 	{% endif %}
 	
-    <form action="{% url 'uploadcomments' %}" method="POST" enctype="multipart/form-data">
+    <form action="{% url 'uploadtutors' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="file" name="csvfile" />
         <input type="submit" value="Upload" />
