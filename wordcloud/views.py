@@ -251,7 +251,7 @@ def results(request):
     # Store the comment ids in the session for search refinement later
     request.session['searched_comment_ids'] = [c['id'] for c in comments]
     pageData["comments"] = comments
-    pageData["sql"] = sql.replace("%s", "{}").format(*params)
+    #pageData["sql"] = sql.replace("%s", "{}").format(*params)
     
     return render(request, 'wordcloud/wordcloud.html', pageData)
 
