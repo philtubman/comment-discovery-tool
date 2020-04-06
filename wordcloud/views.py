@@ -222,7 +222,7 @@ def results(request):
         sql += " AND week_number = %s"
 
     for word in chosen_words:
-        sql += " AND LOWER(text) like LOWER(%s)" # LOWER() for case insensitive results
+        sql += " AND LOWER(text) SIMILAR TO LOWER(%s)" # LOWER() for case insensitive results
 
     sql += " ORDER BY timestamp DESC fetch first 100 rows only"
 	
@@ -232,7 +232,8 @@ def results(request):
             params = [chosen_topic, course_run]
             if "week" in request.session:
                 params.append(request.session["week"])
-            params.extend(["% {} %".format(w) for w in chosen_words])
+            # TODO: The following line could use a better regex, ideally we want the chosen word with a character that is not alphanumeric before and after it.
+            params.extend(["%( |.|,|;|:|!|\?|\(|\)|-|<|>){}( |.|,|;|:|!|\?|\(|\)|-|<|>)%".format(w) for w in chosen_words])
             cursor.execute(sql, params)
             for result in cursor:
                 comment_text = result[3].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
@@ -250,6 +251,7 @@ def results(request):
     # Store the comment ids in the session for search refinement later
     request.session['searched_comment_ids'] = [c['id'] for c in comments]
     pageData["comments"] = comments
+    pageData["sql"] = sql.replace("%s", "{}").format(*params)
     
     return render(request, 'wordcloud/wordcloud.html', pageData)
 
@@ -575,7 +577,7 @@ def terms(request):
                     results.append({'text': result[0], 'size': size})
 
         #print("nbrResults: " + str(nbrResults));
-        results.append({'sql_request': sql})
+        #results.append({'sql_request': sql})
         return JsonResponse(results, safe=False)
     else:
         return JsonResponse({'status': 'NO DATA'})
