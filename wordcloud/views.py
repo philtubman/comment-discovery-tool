@@ -279,6 +279,7 @@ def uploadcomments(request):
         course,run = csvfile.name[0:csvfile.name.index('_')].rsplit('-', 1) # fails if the CSV isn't named as it should from FutureLearn
         wrapper = TextIOWrapper(csvfile, encoding='utf8')
         reader = DictReader(wrapper)
+	
         source_id = [] # To remove comments that have been removed from FL
         
         for row in reader:
