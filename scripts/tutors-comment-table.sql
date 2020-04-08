@@ -23,7 +23,7 @@ NO MINVALUE
 NO MAXVALUE
 CACHE 1;
 
-ALTER TABLE public.wordcloud_tutors_tutor_id_seq OWNER TO wordcloud;
+ALTER TABLE public.wordcloud_tutors_tutor_id_seq OWNER TO wordclouduser;
 
 --
 -- Name: wordcloud_tutors_tutor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wordcloud
