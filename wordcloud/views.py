@@ -404,12 +404,14 @@ def uploadtutors(request):
         edited = 0
         inserted = 0
         errors = 0
+        sqls = []
         for row in reader:
             with connection.cursor() as cursor:
                 # If exist, update, otherwise, insert
                 sql = "SELECT tutor_id FROM wordcloud_tutors WHERE tutor_source_id = %s AND tutor_course = %s and tutor_course_run = %s LIMIT 1"
                 try:
                     params = [row['id'], course, run]
+                    sqls.append(sql.replace("%s", "{}").format(*params))
                     cursor.execute(sql, params)
                     tutor_exists = False
                 except:
@@ -424,6 +426,7 @@ def uploadtutors(request):
                     sql = "UPDATE wordcloud_tutors SET tutor_first_name = %s, tutor_last_name = %s, tutor_team_role = %s, tutor_user_role = %s WHERE tutor_source_id = %s AND tutor_course = %s AND tutor_course_run = %s"
                     try:
                         params = [row['first_name'], row['last_name'], row['team_role'], row['user_role'], row['id'], course, run]
+                        sqls.append(sql.replace("%s", "{}").format(*params))
                         cursor.execute(sql, params)
                         edited += 1
                     except:
@@ -434,13 +437,14 @@ def uploadtutors(request):
                     sql = "INSERT INTO wordcloud_tutors (tutor_source_id, tutor_course, tutor_course_run, tutor_first_name, tutor_last_name, tutor_team_role, tutor_user_role) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     try:
                         params = [row['id'], course, run, row['first_name'], row['last_name'], row['team_role'], row['user_role']]
+                        sqls.append(sql.replace("%s", "{}").format(*params))
                         cursor.execute(sql, params)
                         inserted += 1
                     except:
                         errors += 1
                         continue
             
-        pageData = {'uploadstatus': "Tutors updated. {} inserted, {} edited, {} errors".format(inserted, edited, errors)}
+        pageData = {'sqls' : sqls, 'uploadstatus': "Tutors updated. {} inserted, {} edited, {} errors".format(inserted, edited, errors)}
         return render(request, 'wordcloud/uploadtutors.html', pageData)
     
     return render(request, 'wordcloud/uploadtutors.html')
