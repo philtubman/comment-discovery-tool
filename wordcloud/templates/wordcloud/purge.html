@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Wordcloud Purge</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/wordcloud.css">
+	<script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		function getCourses() {
+			$.getJSON('{% url 'courses' %}', function(data) {
+				course_count = data[0]["count"];
+				if (!course_count)
+					return;
+				$("#course_runs").empty();
+				for (i = 1; i <= course_count; i++)
+					$("#course_runs").append(new Option(data[i]["course"] + " #" + data[i]["run"], data[i]["course"] + "/" + data[i]["run"]));
+			});
+		}
+	</script>
+</head>
+<body onLoad="getCourses();">
+	{% if message %}
+		<p><b>{{ message }}</b></p>
+	{% endif %}
+	<span>Select a course/run to purge.</span>
+    <form action="{% url 'purge' %}" method="POST" id="purgeCourseRun" enctype="multipart/form-data">
+	{% csrf_token %}
+	<select name="course_runs" id="course_runs">
+	<option value="">Loading courses...</option>
+	</select>
+	<input type="hidden" name="action" value="purgeCourseRun">
+	<input class="a-button" type="submit" value="Purge" onclick="return confirm('This will delete all comments, terms, and logs for the selected course/run. Please confirm.');">
+	</form>
+	<br>
+	<form action="{% url 'purge' %}" method="POST" id="purgeCourseRun" enctype="multipart/form-data">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="purgeAll">
+	<input class="a-button" type="submit" value="Purge everything (cascading from comments)" onclick="return confirm('This will wipe everything from the comments. Please confirm.');">
+	</form>
+</body>
+</html>
