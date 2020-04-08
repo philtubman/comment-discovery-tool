@@ -137,3 +137,12 @@ a.showParentComment {
 	font-size:12px;
 	display:none;
 }
+
+#nodatatext {
+	margin:10px;
+}
+
+.week_step_number {
+	font-style:italic;
+	font-size:12px;
+}
