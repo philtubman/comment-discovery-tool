@@ -20,6 +20,10 @@
 			submitWords();
 		}
 		
+		function hashtags() {
+			document.getElementById("hashtags-search").submit();
+		}
+		
 		function resetSearch() {
 			document.getElementById("reset-search").submit();
 		}
@@ -28,6 +32,9 @@
 			if (document.getElementById(displayTarget).style.display != "inline-block") {
 				$.getJSON('/data/comment?id=' + id, function(data) {
 					document.getElementById(displayTarget).innerHTML = '"' + data["comment"] + '"<br />';
+					if (data["other_comments_nbr"]) {
+						document.getElementById(displayTarget).innerHTML += '<i><b>' + data["other_comments_nbr"] + ' other users commented on this thread.</i></b><br />';
+					}
 					document.getElementById(displayTarget).style.display = "inline-block";
 				});
 			} else {
@@ -38,12 +45,15 @@
 </head>
 <body>
     <div id="wordcloud-container">
+		{% if sql %}
+			<p>SQL: {{ sql }}</p>
+		{% endif %}
 		<div id="coursetitle">Course {{ chosen_topic }} #{{ course_run }} 
 			<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#help" aria-expanded="true" aria-controls="help"><b>?</b></button>
 		</div>
 		
 		<div id="help" class="collapse">
-			<h5>Information &amp; Help</h2>
+			<h5>Information &amp; Help</h5>
 			<span>The Word Cloud contains the top 200 most used words in the comments on your research.<br />
 			The words are scaled based on the frequency, with more frequently used words being drawn larger.<br />
 			Click on a word to show the comments featuring that word.</span>
@@ -72,7 +82,7 @@
         <div {% if chosen_words %}class="show"{% endif %} id="wordcloud-collapse">
 			<div id="abovethecloud">
 				<div id="weekstabs">
-					<div class="weektab weektaball{% if not selectedWeek %} selectedtab{% endif %}"><a href="#" onclick="week(0);">All weeks{% if not selectedWeek %} &#10004;{% endif %}</a></div>{% for week in weeks %}<div class="weektab{% if selectedWeek == week %} selectedtab{% endif %}"><a href="#" onclick="week({{ week }});">Week {{ week }}{% if selectedWeek == week %} &#10004;{% endif %}<span></span></a></div>{% endfor %}
+					<div class="weektab weektaball{% if not selectedWeek and not hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="week(0);">All weeks{% if not selectedWeek and not hashtags_selected %} &#10004;{% endif %}</a></div>{% for week in weeks %}<div class="weektab{% if selectedWeek == week %} selectedtab{% endif %}"><a href="#" onclick="week({{ week }});">Week {{ week }}{% if selectedWeek == week %} &#10004;{% endif %}<span></span></a></div>{% endfor %}{% if hashtags %}<div class="weektab{% if hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="hashtags();">&num;Hashtags{% if hashtags_selected %} &#10004;{% endif %}<span></span></a></div>{% endif %}
 				</div>
 				</div>
             <div id="wordcloud"></div>
@@ -92,10 +102,16 @@
                 <tr>
                     <td><a href="https://www.futurelearn.com/courses/{{ chosen_topic }}/{{ course_run }}/comments/{{ comment.source_id }}" class="comment-link" data-comment-id="{{ comment.id }}">Join this Conversation</a></td>
                     <td>
-					{% if comment.parent_id %}
-						<a href="#" onclick="getParent({{ comment.parent_id }}, 'parent-comment-{{ comment.id }}');" class="showParentComment">In response to another comment (#{{ comment.parent_id }})</a><br />
-						<span id="parent-comment-{{ comment.id }}" class="parentComment">Test<br /></span>
+					<span class="week_step_number">Step {{ comment.week_number }}.{{ comment.step_number }}
+					{% if comment.tutor_id and comment.tutor_id != 0 %}
+					<b>Tutor comment</b>
 					{% endif %}
+					</span>
+					{% if comment.parent_id %}
+						<a href="#" onclick="getParent({{ comment.parent_id }}, 'parent-comment-{{ comment.id }}');" class="showParentComment">In response to another comment (#{{ comment.parent_id }})</a>
+						<span id="parent-comment-{{ comment.id }}" class="parentComment"></span>
+					{% endif %}
+					<br />
 					{{ comment.text|safe }}
 					</td>
                 </tr>
@@ -113,9 +129,21 @@
             {% csrf_token %}
 			<input type="hidden" name="session_key" value="{{ session_key }}">
         </form>
+		<form id="hashtags-search" action="{% url 'results' %}" method="POST" style="display: none;">
+			<input type="hidden" id="gethashtags" name="gethashtags">
+            {% csrf_token %}
+			<input type="hidden" name="session_key" value="{{ session_key }}">
+        </form>
+		
     </div> <!-- /wordcloud-container -->
     <div id="nodataimage">
-        <img src="/static/images/black_dog_error.jpg" />
+		<div id="nodatatext">
+			<h5>No data</h5>
+			<span>Your search returned no result.<br />
+			You can reset your research using the button down below.</span><br />
+			<button class="btn btn-primary btn-sm" type="button" onclick="resetSearch();">Reset search</button><br /><br />
+			<img src="/static/images/no_more_comments.jpg" style="width:350px;" />
+		</div>
     </div>
 	<script type="text/javascript" src="/static/js/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="/static/js/d3.js"></script>
