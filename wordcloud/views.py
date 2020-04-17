@@ -233,7 +233,7 @@ def results(request):
             if "week" in request.session:
                 params.append(request.session["week"])
             # TODO: The following line could use a better regex, ideally we want the chosen word with a character that is not alphanumeric before and after it.
-            params.extend(["%( |.|,|;|:|!|\?|\(|\)|-|<|>){}( |.|,|;|:|!|\?|\(|\)|-|<|>)%".format(w) for w in chosen_words])
+            params.extend(["%( |.|,|;|:|!|\?|\(|\)|-|<|>|/){}( |.|,|;|:|!|\?|\(|\)|-|<|>|/)%".format(w) for w in chosen_words])
             cursor.execute(sql, params)
             for result in cursor:
                 comment_text = result[3].replace(chosen_words[0], "<mark>{}</mark>".format(chosen_words[0]))
@@ -313,15 +313,20 @@ def uploadcomments(request):
             if " #" in comment.text:
                 hashtag = ""
                 hashtag_began = False
+                space_before = False
                 for character in comment.text:
+                    if character == ' ':
+                        space_before = True
+                        continue
                     if hashtag_began and not character.isalnum():
                         words.append(hashtag)
                         hashtag = ""
                         hashtag_began = False
-                    if character == '#':
+                    if character == '#' and space_before:
                         hashtag_began = True
                     if hashtag_began:
                         hashtag += character
+                    space_before = False
                 if hashtag_began:
                     words.append(hashtag)
                     hashtag = ""
@@ -553,6 +558,7 @@ def terms(request):
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
             nbrResults = 0
+            lastSize = 0
             for result in cursor:
                 nbrResults = nbrResults + 1
                 # Case insensitive fix: un/capitalize and check if already in result, if yes, keeping highest size and adding size of smallest, otherwise the opposite
@@ -578,8 +584,10 @@ def terms(request):
                     size = result[1]
                     if nbrResults == 1 and size == 1:
                         size = 2 # Quick and dirty fix, the wordcloud doesn't work if all words are size == 1
-                    results.append({'text': result[0], 'size': size})
+                    results.append({'text': result[0], 'size': result[1]})
 
+        results.append({'text': " ", 'size': 0}) # Quick fix for a wordcloud bug, if all words in list are same size, the wordcloud prints out nothing. This allows to always have something different (size 0)
+        
         #print("nbrResults: " + str(nbrResults));
         #results.append({'sql_request': sql})
         return JsonResponse(results, safe=False)
