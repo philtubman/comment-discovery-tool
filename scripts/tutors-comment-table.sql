@@ -21,7 +21,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: wordcloud_tutors; Type: TABLE; Schema: public; Owner: wordcloud
+-- Name: wordcloud_tutors; Type: TABLE; Schema: public; Owner: wordclouduser
 --
 
 CREATE TABLE public.wordcloud_tutors (
@@ -36,10 +36,10 @@ CREATE TABLE public.wordcloud_tutors (
 );
 
 
-ALTER TABLE public.wordcloud_tutors OWNER TO wordcloud;
+ALTER TABLE public.wordcloud_tutors OWNER TO wordclouduser;
 
 --
--- Name: wordcloud_tutors_tutor_id_seq; Type: SEQUENCE; Schema: public; Owner: wordcloud
+-- Name: wordcloud_tutors_tutor_id_seq; Type: SEQUENCE; Schema: public; Owner: wordclouduser
 --
 
 CREATE SEQUENCE public.wordcloud_tutors_tutor_id_seq
@@ -51,24 +51,24 @@ CREATE SEQUENCE public.wordcloud_tutors_tutor_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.wordcloud_tutors_tutor_id_seq OWNER TO wordcloud;
+ALTER TABLE public.wordcloud_tutors_tutor_id_seq OWNER TO wordclouduser;
 
 --
--- Name: wordcloud_tutors_tutor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wordcloud
+-- Name: wordcloud_tutors_tutor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: wordclouduser
 --
 
 ALTER SEQUENCE public.wordcloud_tutors_tutor_id_seq OWNED BY public.wordcloud_tutors.tutor_id;
 
 
 --
--- Name: wordcloud_tutors tutor_id; Type: DEFAULT; Schema: public; Owner: wordcloud
+-- Name: wordcloud_tutors tutor_id; Type: DEFAULT; Schema: public; Owner: wordclouduser
 --
 
 ALTER TABLE ONLY public.wordcloud_tutors ALTER COLUMN tutor_id SET DEFAULT nextval('public.wordcloud_tutors_tutor_id_seq'::regclass);
 
 
 --
--- Name: wordcloud_tutors wordcloud_tutors_pkey; Type: CONSTRAINT; Schema: public; Owner: wordcloud
+-- Name: wordcloud_tutors wordcloud_tutors_pkey; Type: CONSTRAINT; Schema: public; Owner: wordclouduser
 --
 
 ALTER TABLE ONLY public.wordcloud_tutors
