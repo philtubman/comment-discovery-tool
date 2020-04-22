@@ -310,27 +310,28 @@ def uploadcomments(request):
             # Add the named entities back in.
             words.extend(named_entities)
             # Hashtag detection
-            if " #" in comment.text:
-                hashtag = ""
-                hashtag_began = False
-                space_before = False
+            if '#' in comment.text:
+                hashtag = ''
+                new_word = False
                 for character in comment.text:
-                    if character == ' ':
-                        space_before = True
-                        continue
-                    if hashtag_began and not character.isalnum():
-                        words.append(hashtag)
-                        hashtag = ""
-                        hashtag_began = False
-                    if character == '#' and space_before:
-                        hashtag_began = True
-                    if hashtag_began:
-                        hashtag += character
-                    space_before = False
-                if hashtag_began:
+                    if hashtag != '':
+                        if character.isalnum():
+                            hashtag += character
+                        else:
+                            if hashtag != '#':
+                                words.append(hashtag)
+                            hashtag = ''
+                            if character.isspace():
+                                new_word = True
+                    elif character.isspace():
+                        new_word = True
+                    elif character == '#' and new_word:
+                        hashtag = '#'
+                        new_word = False
+                    else:
+                        new_word = False
+                if hashtag != '' and hashtag != '#':
                     words.append(hashtag)
-                    hashtag = ""
-                    hashtag_began = False
                         
             comment.word_count = len(words)
 
