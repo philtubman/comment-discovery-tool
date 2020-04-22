@@ -82,7 +82,7 @@
         <div {% if chosen_words %}class="show"{% endif %} id="wordcloud-collapse">
 			<div id="abovethecloud">
 				<div id="weekstabs">
-					<div class="weektab weektaball{% if not selectedWeek and not hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="week(0);">All weeks{% if not selectedWeek and not hashtags_selected %} &#10004;{% endif %}</a></div>{% for week in weeks %}<div class="weektab{% if selectedWeek == week %} selectedtab{% endif %}"><a href="#" onclick="week({{ week }});">Week {{ week }}{% if selectedWeek == week %} &#10004;{% endif %}<span></span></a></div>{% endfor %}{% if hashtags %}<div class="weektab{% if hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="hashtags();">&num;Hashtags{% if hashtags_selected %} &#10004;{% endif %}<span></span></a></div>{% endif %}
+					<div class="weektab weektaball{% if not selectedWeek and not hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="week(0);">All weeks{% if not selectedWeek and not hashtags_selected %} &#10004;{% endif %}</a></div>{% for week in weeks %}<div class="weektab{% if selectedWeek == week %} selectedtab{% endif %}"><a href="#" onclick="week({{ week }});">Week {{ week }}{% if selectedWeek == week %} &#10004;{% endif %}<span></span></a></div>{% endfor %}{% if hashtags %}<div class="weektab{% if hashtags_selected %} selectedtab{% endif %}"><a href="#" onclick="hashtags();">&num;hashtags{% if hashtags_selected %} &#10004;{% endif %}<span></span></a></div>{% endif %}
 				</div>
 				</div>
             <div id="wordcloud"></div>
